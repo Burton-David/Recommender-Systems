@@ -1,5 +1,5 @@
 # Recommender Systems Library
-**This library contains a variety of different recommender systems implemented in Python. The following is a table of contents for the included files:**
+**This library contains a variety of different recommender systems implemented in Python.**
 
 1. user_based_cosine_similarity.py
 2. item_based_dot_product.py

@@ -1,4 +1,4 @@
-"""Build item feature matrices from text, for use with :class:`~recommender_systems.content.ContentBased`."""
+"""Build item feature matrices from text, for use with ContentBased."""
 
 from __future__ import annotations
 

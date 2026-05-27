@@ -1,6 +1,7 @@
 # Recommender Systems Library
 
 [![CI](https://github.com/Burton-David/Recommender-Systems/actions/workflows/ci.yml/badge.svg)](https://github.com/Burton-David/Recommender-Systems/actions/workflows/ci.yml)
+[![Docs](https://github.com/Burton-David/Recommender-Systems/actions/workflows/docs.yml/badge.svg)](https://burton-david.github.io/Recommender-Systems/)
 [![codecov](https://codecov.io/gh/Burton-David/Recommender-Systems/branch/main/graph/badge.svg)](https://codecov.io/gh/Burton-David/Recommender-Systems)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

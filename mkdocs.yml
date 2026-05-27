@@ -49,7 +49,11 @@ plugins:
 nav:
   - Overview: index.md
   - Quickstart: quickstart.md
+<<<<<<< HEAD
   - Choosing an algorithm: choosing_an_algorithm.md
+=======
+  - Beyond accuracy: beyond_accuracy.md
+>>>>>>> origin/main
   - API Reference: api.md
 
 markdown_extensions:

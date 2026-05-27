@@ -1,4 +1,5 @@
 import pandas as pd
+from scipy import sparse
 
 from recommender_systems.base import Recommender
 from recommender_systems.neighborhood import ItemKNN, UserKNN
@@ -34,3 +35,12 @@ def test_user_knn_recommends_from_nearest_neighbor():
 
 def test_unknown_user_returns_empty():
     assert UserKNN().fit(sample_ratings()).recommend(999) == []
+
+
+def test_knn_stores_sparse_matrix():
+    # Regression: the sparse-everywhere rewrite kept the recommend contract;
+    # this pins the internal representation so a future change can't silently
+    # revert to dense and reintroduce the goodbooks-10k memory blowup.
+    for cls in (ItemKNN, UserKNN):
+        model = cls().fit(sample_ratings())
+        assert sparse.issparse(model._matrix), f"{cls.__name__}._matrix is not sparse"

@@ -1,7 +1,7 @@
 # Phase 5 — Go serving layer: postmortem
 
-**Status:** shipped as a deliberate negative result.
-**Tag:** `v0.5.0` (planned).
+**Status:** harness shipped; measurement pending.
+**Tag:** `v0.5.0` (planned, gated on real numbers).
 **Code change:** new `serving/` directory with a FastAPI Python service,
 a stdlib-only Go service, an httpx-async load generator, and methodology
 docs. **The library's runtime code does not depend on any of it.**
@@ -10,12 +10,15 @@ docs. **The library's runtime code does not depend on any of it.**
 
 Phases 2 and 3 took a measurement, found a hot path, and rewrote it.
 This phase took a *guess* — "a Go serving layer will lower latency and
-memory enough to be worth the complexity" — built both sides honestly,
-measured them, and recorded the result.
+memory enough to be worth the complexity" — and the goal is to answer
+whether the guess holds up against a fair benchmark.
 
-The result is the postmortem itself: **for this library's actual
-workload, Go does not pay off.** Writing that down is what makes the
-exercise worth keeping rather than quietly deleting.
+The verdict has to follow the numbers, not lead them. The harness is in
+tree; [Results](#results) is empty until both services have been measured
+on a machine that has both Go and the Python environment. A
+first-principles forecast lives in
+[What the numbers should show, and why](#what-the-numbers-should-show-and-why)
+so a reader can compare prediction to outcome when the table fills in.
 
 ## Methodology
 
@@ -29,51 +32,66 @@ deliberately avoiding gonum to keep the comparison about runtime
 choice rather than library choice.
 
 Load generator is `serving/bench/run_bench.py` — async httpx, fixed
-duration, fixed concurrency. Reports RPS, mean / p50 / p95 / p99
-latency, and process RSS. Same script hits either backend.
+duration, fixed concurrency. Reports RPS, mean / p50 / p95 / p99 client
+latency. Pass `--server-pid <pid>` and it also samples the server
+process's resident set size at the end via `ps`; the load generator's
+own memory is uninteresting and intentionally not reported.
+
+The top-N selection on both sides uses partial selection
+(`np.argpartition` in Python, a min-heap in Go) so the comparison stays
+"runtime + numerical library" and doesn't accidentally penalize Go for
+doing a full sort.
 
 ```
 python -m serving.python.export_model --out serving/model.json
-uvicorn serving.python.server:app --port 8000 --workers 1
-(cd serving/go && go run . --model ../model.json --port 8001)
-python serving/bench/run_bench.py --url http://localhost:8000/recommend --duration 30 --concurrency 32
-python serving/bench/run_bench.py --url http://localhost:8001/recommend --duration 30 --concurrency 32
+uvicorn serving.python.server:app --port 8000 --workers 1 &  PY_PID=$!
+(cd serving/go && go run . --model ../model.json --port 8001) &  GO_PID=$!
+python serving/bench/run_bench.py --url http://localhost:8000/recommend \
+    --duration 30 --concurrency 32 --server-pid $PY_PID
+python serving/bench/run_bench.py --url http://localhost:8001/recommend \
+    --duration 30 --concurrency 32 --server-pid $GO_PID
 ```
 
-The recipe above is the source of truth; numbers below are from running
-it on an Apple Silicon M-series laptop, single worker per service, 30
-second runs, concurrency 32.
+The recipe above is the source of truth.
 
-## Result
+## Results
 
 | | FastAPI + numpy | Go + stdlib |
 |---|---|---|
-| Throughput | ~3,100 req/s | ~2,400 req/s |
-| Latency p50 | 9 ms | 12 ms |
-| Latency p95 | 14 ms | 18 ms |
-| Latency p99 | 19 ms | 26 ms |
-| Process RSS (steady) | ~150 MB | ~85 MB |
+| Throughput (req/s) | _pending_ | _pending_ |
+| Latency p50 (ms) | _pending_ | _pending_ |
+| Latency p95 (ms) | _pending_ | _pending_ |
+| Latency p99 (ms) | _pending_ | _pending_ |
+| Server RSS, steady (MiB) | _pending_ | _pending_ |
 
-*Numbers re-measured by the reviewer; commit may update them in place
-without changing the verdict.*
+Filled in when a machine with both Go and the Python serving deps runs
+the recipe. The table will be amended with whatever the run actually
+shows; the conclusion below follows the numbers, not the reverse.
 
-Two observations dominate:
+## What the numbers should show, and why
 
-1. **Python is faster on per-request CPU work because numpy lands on
-   BLAS.** The hot path is one `(n_items, n_factors) @ (n_factors,)`
-   matrix-vector multiply — for goodbooks-class catalogs that's a few
-   million FLOPs. Numpy hands it to Accelerate / MKL / OpenBLAS,
-   which has been hand-tuned for two decades. The Go service runs a
-   hand-written nested loop. We picked stdlib-only on purpose so the
-   comparison is "runtime choice" rather than "library choice"; the
-   result is that the runtime choice doesn't help when the library
-   choice is doing all the work on the other side.
-2. **Go has a real memory edge that doesn't matter at this scale.**
-   ~65 MB lower steady-state RSS. For a single deployment of a
-   single recommender model on a single machine, that gap is
-   invisible — it would only start to matter at hundreds of replicas
-   or in memory-constrained edge environments, neither of which this
-   library targets.
+A first-principles forecast, to be compared against the actual run:
+
+1. **Python should win on CPU per request.** The hot path is one
+   `(n_items, n_factors) @ (n_factors,)` matrix-vector multiply —
+   for goodbooks-class catalogs that's a few million FLOPs. Numpy
+   hands it to Accelerate / MKL / OpenBLAS, hand-tuned for two
+   decades. The Go service runs a stdlib nested loop. Stdlib-only is
+   on purpose so the comparison is "runtime choice" rather than
+   "library choice"; the prediction is that the runtime choice
+   doesn't help when the library choice is doing all the work on the
+   other side. Expected: Python higher RPS, lower latency.
+2. **Go should win on memory by a small constant.** Empty FastAPI +
+   uvicorn + numpy + a SVD model is ~120–180 MiB resident; a Go HTTP
+   server holding the same factors as float32 slices is ~60–100 MiB.
+   Expected: Go ~50–100 MiB ahead on steady-state RSS.
+3. **GC tail latency** shouldn't differentiate at concurrency 32 —
+   Go's pauses are sub-ms and Python releases the GIL on numpy
+   blocking calls. Both runtimes should be quiet under this load
+   profile.
+
+If the actual numbers contradict the forecast, the forecast is wrong
+and the postmortem gets updated to walk through why.
 
 ## What we honestly considered (and how Go could win)
 

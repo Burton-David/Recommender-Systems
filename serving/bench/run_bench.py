@@ -3,14 +3,17 @@
 Runs concurrent GET /recommend requests for a fixed duration, then reports
 RPS plus a latency histogram. The same script hits either backend — the only
 thing that differs between runs is the ``--url`` argument.
+
+Pass ``--server-pid <pid>`` to also report the **server** process's resident
+set size at the end. The load generator's own memory is uninteresting — the
+serving comparison is about the server.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import os
-import resource
+import subprocess
 import time
 from collections.abc import Iterable
 
@@ -72,8 +75,6 @@ async def main_async(args: argparse.Namespace) -> int:
     rps = total / args.duration
     pcts = percentiles(latencies, [0.50, 0.95, 0.99])
     mean = sum(latencies) / len(latencies) if latencies else float("nan")
-    rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    rss_mb = rss_kb / 1024 if os.uname().sysname == "Linux" else rss_kb / (1024 * 1024)
 
     print(f"url:           {args.url}")
     print(f"duration:      {args.duration}s   concurrency: {args.concurrency}")
@@ -83,8 +84,26 @@ async def main_async(args: argparse.Namespace) -> int:
         f"latency ms:    mean {mean:.2f}  p50 {pcts[0.50]:.2f}  "
         f"p95 {pcts[0.95]:.2f}  p99 {pcts[0.99]:.2f}"
     )
-    print(f"client rss:    {rss_mb:.1f} MiB")
+    if args.server_pid:
+        rss = _server_rss_mb(args.server_pid)
+        if rss is None:
+            print(f"server rss:    (pid {args.server_pid} unavailable)")
+        else:
+            print(f"server rss:    {rss:.1f} MiB (pid {args.server_pid})")
     return 0
+
+
+def _server_rss_mb(pid: int) -> float | None:
+    """Return server RSS in MiB via ``ps``. Works on macOS and Linux without
+    any extra dependency; ``psutil`` would be cleaner but it's not in the
+    serving extras and the postmortem needs to stay self-contained."""
+    try:
+        out = subprocess.check_output(
+            ["ps", "-o", "rss=", "-p", str(pid)], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        return int(out) / 1024.0  # ps -o rss reports KiB
+    except (subprocess.CalledProcessError, ValueError, FileNotFoundError):
+        return None
 
 
 def main() -> int:
@@ -93,6 +112,11 @@ def main() -> int:
     parser.add_argument("--duration", type=int, default=30)
     parser.add_argument("--concurrency", type=int, default=32)
     parser.add_argument("--timeout", type=float, default=2.0)
+    parser.add_argument(
+        "--server-pid",
+        type=int,
+        help="PID of the server process whose RSS to sample at the end",
+    )
     return asyncio.run(main_async(parser.parse_args()))
 
 

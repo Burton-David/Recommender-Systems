@@ -8,6 +8,7 @@
 package main
 
 import (
+	"container/heap"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -77,16 +78,52 @@ func (m *model) scoreUser(uIdx int) []float32 {
 	return scores
 }
 
+// topN returns the indices of the n largest entries in scores, descending.
+// Uses container/heap to do partial selection in O(items * log n) rather
+// than a full sort, matching numpy's argpartition + small argsort in
+// the Python service so the comparison stays apples-to-apples.
 func topN(scores []float32, n int) []int {
-	order := make([]int, len(scores))
-	for i := range order {
-		order[i] = i
+	if n >= len(scores) {
+		out := make([]int, len(scores))
+		for i := range out {
+			out[i] = i
+		}
+		sort.Slice(out, func(i, j int) bool { return scores[out[i]] > scores[out[j]] })
+		return out
 	}
-	sort.Slice(order, func(i, j int) bool { return scores[order[i]] > scores[order[j]] })
-	if n > len(order) {
-		n = len(order)
+	// Build a min-heap of size n; replace the root whenever a larger score appears.
+	h := &topHeap{scores: scores, idx: make([]int, 0, n)}
+	for i := 0; i < n; i++ {
+		h.idx = append(h.idx, i)
 	}
-	return order[:n]
+	heap.Init(h)
+	for i := n; i < len(scores); i++ {
+		if scores[i] > scores[h.idx[0]] {
+			h.idx[0] = i
+			heap.Fix(h, 0)
+		}
+	}
+	// Final sort of the n winners; n is small (e.g., 10) so this is cheap.
+	out := h.idx
+	sort.Slice(out, func(i, j int) bool { return scores[out[i]] > scores[out[j]] })
+	return out
+}
+
+type topHeap struct {
+	scores []float32
+	idx    []int
+}
+
+func (h *topHeap) Len() int            { return len(h.idx) }
+func (h *topHeap) Less(i, j int) bool  { return h.scores[h.idx[i]] < h.scores[h.idx[j]] }
+func (h *topHeap) Swap(i, j int)       { h.idx[i], h.idx[j] = h.idx[j], h.idx[i] }
+func (h *topHeap) Push(x interface{}) { h.idx = append(h.idx, x.(int)) }
+func (h *topHeap) Pop() interface{} {
+	old := h.idx
+	n := len(old)
+	x := old[n-1]
+	h.idx = old[:n-1]
+	return x
 }
 
 func recommendHandler(m *model) http.HandlerFunc {

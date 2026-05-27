@@ -50,6 +50,9 @@ dev = [
 Homepage = "https://github.com/Burton-David/Recommender-Systems"
 Repository = "https://github.com/Burton-David/Recommender-Systems"
 
+[project.scripts]
+recsys = "recommender_systems.cli:main"
+
 [tool.hatch.version]
 path = "src/recommender_systems/__init__.py"
 

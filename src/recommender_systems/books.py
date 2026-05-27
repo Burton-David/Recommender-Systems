@@ -12,10 +12,13 @@ from typing import Any
 
 import pandas as pd
 
+from recommender_systems.base import Recommender
 from recommender_systems.content import ContentBased
 from recommender_systems.features import text_features
+from recommender_systems.hybrid import HybridRecommender
+from recommender_systems.neighborhood import ItemKNN
 
-__all__ = ["build_tag_recommender", "tag_text_per_book"]
+__all__ = ["build_hybrid_book_recommender", "build_tag_recommender", "tag_text_per_book"]
 
 
 def tag_text_per_book(tags: pd.DataFrame) -> dict[Hashable, str]:
@@ -49,3 +52,39 @@ def build_tag_recommender(tags: pd.DataFrame, **vectorizer_kwargs: Any) -> Conte
     """
     features = text_features(tag_text_per_book(tags), method="tfidf", **vectorizer_kwargs)
     return ContentBased(item_features=features)
+
+
+def build_hybrid_book_recommender(
+    tags: pd.DataFrame,
+    *,
+    collaborative: Recommender | None = None,
+    weights: tuple[float, float] = (1.0, 1.0),
+    rank_constant: int = 60,
+    **vectorizer_kwargs: Any,
+) -> HybridRecommender:
+    """Blend a collaborative recommender with the tag-based content recommender.
+
+    Defaults to ``ItemKNN(k=20)`` on the collaborative side because item-item kNN
+    composes well with content signal (both rank items by similarity, just over
+    different spaces). Pass any other ``Recommender`` to swap that out.
+
+    Parameters
+    ----------
+    tags
+        DataFrame with columns ``book_id``, ``tag_name``, ``count`` — fed into
+        :func:`build_tag_recommender`.
+    collaborative
+        Recommender to use on the collaborative side. ``None`` (default) uses
+        ``ItemKNN(k=20)``.
+    weights
+        ``(collab_weight, content_weight)`` for the underlying
+        :class:`HybridRecommender` (RRF fusion).
+    rank_constant
+        Forwarded to :class:`HybridRecommender`.
+    **vectorizer_kwargs
+        Forwarded to :func:`build_tag_recommender` (and thence to scikit-learn's
+        ``TfidfVectorizer``) — useful for ``max_features`` on big tag catalogs.
+    """
+    content = build_tag_recommender(tags, **vectorizer_kwargs)
+    collab = collaborative if collaborative is not None else ItemKNN(k=20)
+    return HybridRecommender([collab, content], weights=list(weights), rank_constant=rank_constant)

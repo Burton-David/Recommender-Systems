@@ -65,8 +65,9 @@ pip install -e .
 
 Optional extras:
 
+- `[neural]` — PyTorch for the two-tower neural CF (`TwoTowerCF`)
 - `[embeddings]` — gensim for word-embedding features
-- `[benchmarks]` — matplotlib + tabulate for `scripts/benchmark.py`
+- `[benchmarks]` — matplotlib + tabulate for the benchmark scripts
 - `[docs]` — mkdocs-material for building the docs site
 - `[dev]` — ruff, mypy, pytest, pytest-cov
 
@@ -113,6 +114,7 @@ recsys evaluate  --algo svd
 | `recommender_systems.svd`           | `SVD`                | Truncated SVD on the user-item matrix                |
 | `recommender_systems.content`       | `ContentBased`       | Item-feature similarity (TF-IDF, tags, embeddings)   |
 | `recommender_systems.bpr`           | `BPR`                | Bayesian Personalized Ranking (numpy SGD)            |
+| `recommender_systems.als`           | `ALS`                | Alternating Least Squares (Hu/Koren/Volinsky 2008)   |
 | `recommender_systems.neural`        | `TwoTowerCF`         | Two-tower neural CF (PyTorch; requires `[neural]`)   |
 
 `recommender_systems.features.text_features` builds TF-IDF / count / binary

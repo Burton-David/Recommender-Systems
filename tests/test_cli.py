@@ -80,3 +80,31 @@ def test_seed_propagates_to_svd(monkeypatch, fake_ratings):
     code = cli.main(["--seed", "42", "recommend", "--algo", "svd", "--user", "1", "--n", "1"])
     assert code == 0
     assert seen == {"random_state": 42}
+
+
+def test_bpr_is_registered_and_seeded():
+    from recommender_systems.bpr import BPR
+
+    assert "bpr" in cli.ALGORITHMS
+    model = cli._instantiate("bpr", seed=7)
+    assert isinstance(model, BPR)
+    assert model.random_state == 7
+
+
+def test_als_is_registered_and_seeded():
+    from recommender_systems.als import ALS
+
+    assert "als" in cli.ALGORITHMS
+    model = cli._instantiate("als", seed=7)
+    assert isinstance(model, ALS)
+    assert model.random_state == 7
+
+
+def test_version_flag_prints_package_version(capsys):
+    import recommender_systems
+
+    with pytest.raises(SystemExit):
+        cli.main(["--version"])
+    out = capsys.readouterr().out
+    assert recommender_systems.__version__ in out
+    assert "recsys" in out

@@ -75,3 +75,18 @@ class _MatrixBackedRecommender(Recommender):
         scores[self._matrix.loc[user_id].to_numpy() > 0] = -np.inf
         order = np.argsort(-scores)
         return [self._matrix.columns[i] for i in order if np.isfinite(scores[i])][:n]
+
+
+class _PredictedScoreRecommender(_MatrixBackedRecommender):
+    """Matrix-backed recommender that precomputes a dense user-item score matrix.
+
+    Subclasses populate ``self._predicted`` (users x items, row-aligned with
+    ``self._matrix``) during :meth:`fit`; scoring a user is then a row lookup.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._predicted: np.ndarray = np.empty((0, 0))
+
+    def _user_scores(self, user_id: Hashable) -> np.ndarray:
+        return np.asarray(self._predicted[self._matrix.index.get_loc(user_id)])

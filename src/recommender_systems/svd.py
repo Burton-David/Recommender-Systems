@@ -2,19 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-
-import numpy as np
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
 
-from recommender_systems.base import _MatrixBackedRecommender
+from recommender_systems.base import _PredictedScoreRecommender
 from recommender_systems.data import build_user_item_matrix
 
 __all__ = ["SVD"]
 
 
-class SVD(_MatrixBackedRecommender):
+class SVD(_PredictedScoreRecommender):
     """Recommend from a low-rank reconstruction of the user-item matrix.
 
     Parameters
@@ -29,7 +26,6 @@ class SVD(_MatrixBackedRecommender):
         super().__init__()
         self.n_factors = n_factors
         self.random_state = random_state
-        self._predicted = np.empty((0, 0))
 
     def fit(self, ratings: pd.DataFrame) -> SVD:
         self._matrix = build_user_item_matrix(ratings, fill_value=0.0)
@@ -38,6 +34,3 @@ class SVD(_MatrixBackedRecommender):
         factors = model.fit_transform(self._matrix.to_numpy())
         self._predicted = factors @ model.components_
         return self
-
-    def _user_scores(self, user_id: Hashable) -> np.ndarray:
-        return np.asarray(self._predicted[self._matrix.index.get_loc(user_id)])

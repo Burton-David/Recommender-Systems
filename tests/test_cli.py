@@ -91,6 +91,15 @@ def test_bpr_is_registered_and_seeded():
     assert model.random_state == 7
 
 
+def test_als_is_registered_and_seeded():
+    from recommender_systems.als import ALS
+
+    assert "als" in cli.ALGORITHMS
+    model = cli._instantiate("als", seed=7)
+    assert isinstance(model, ALS)
+    assert model.random_state == 7
+
+
 def test_version_flag_prints_package_version(capsys):
     import recommender_systems
 

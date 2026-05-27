@@ -56,8 +56,9 @@ pip install -e .
 
 Optional extras:
 
+- `[neural]` — PyTorch for the two-tower neural CF (`TwoTowerCF`)
 - `[embeddings]` — gensim for word-embedding features
-- `[benchmarks]` — matplotlib + tabulate for `scripts/benchmark.py`
+- `[benchmarks]` — matplotlib + tabulate for the benchmark scripts
 - `[docs]` — mkdocs-material for building the docs site
 - `[dev]` — ruff, mypy, pytest, pytest-cov
 

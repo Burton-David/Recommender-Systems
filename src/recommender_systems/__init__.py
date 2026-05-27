@@ -5,6 +5,7 @@ from recommender_systems.baselines import MeanRating, MostPopular
 from recommender_systems.bpr import BPR
 from recommender_systems.content import ContentBased
 from recommender_systems.data import (
+    build_sparse_user_item_matrix,
     build_user_item_matrix,
     densest_subset,
     holdout_per_user,
@@ -26,6 +27,7 @@ __all__ = [
     "MostPopular",
     "Recommender",
     "UserKNN",
+    "build_sparse_user_item_matrix",
     "build_user_item_matrix",
     "densest_subset",
     "holdout_per_user",

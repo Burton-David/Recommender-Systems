@@ -39,6 +39,7 @@ benchmarks = [
     "tabulate>=0.9",
 ]
 embeddings = ["gensim>=4.3"]
+neural = ["torch>=2.0"]
 docs = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.24",

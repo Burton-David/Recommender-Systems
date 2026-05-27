@@ -29,6 +29,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Install neural extras
+        if: matrix.python-version == '3.12'
+        run: pip install -e ".[neural]"
       - name: Lint
         run: ruff check src tests scripts
       - name: Format check

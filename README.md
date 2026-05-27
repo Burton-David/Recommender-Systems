@@ -21,11 +21,11 @@ Top-10 evaluation on **MovieLens 100k** (80/20 seeded split). Reproduce with
 
 |             | precision@10 | recall@10 |  MAP@10 | NDCG@10 | coverage@10 |
 |:------------|-------------:|----------:|--------:|--------:|------------:|
-| MostPopular |       0.1863 |    0.1191 |  0.1104 |  0.2141 |      0.0315 |
-| MeanRating  |       0.0490 |    0.0194 |  0.0140 |  0.0428 |      0.0161 |
-| ItemKNN     |       0.3188 |    0.2010 |  0.2486 |  0.3786 |      0.2866 |
-| UserKNN     |       0.3175 |    0.2123 |  0.2503 |  0.3881 |      0.2134 |
-| SVD         |       0.3016 |    0.2134 |  0.2283 |  0.3675 |      0.2717 |
+| MostPopular |       0.1935 |    0.1165 |  0.1139 |  0.2184 |      0.0321 |
+| MeanRating  |       0.0489 |    0.0211 |  0.0154 |  0.0447 |      0.0166 |
+| ItemKNN     |       0.3240 |    0.2070 |  0.2484 |  0.3833 |      0.2919 |
+| UserKNN     |       0.3199 |    0.2141 |  0.2473 |  0.3856 |      0.2170 |
+| SVD         |       0.3139 |    0.2166 |  0.2351 |  0.3780 |      0.2806 |
 
 See [`benchmarks/results.md`](benchmarks/results.md) for the table regenerated from
 the latest run.
@@ -37,11 +37,11 @@ Reproduce with `python -m scripts.benchmark_goodbooks`.
 
 |             | precision@10 | recall@10 |  MAP@10 | NDCG@10 | coverage@10 |
 |:------------|-------------:|----------:|--------:|--------:|------------:|
-| MostPopular |       0.0985 |    0.0434 |  0.0482 |  0.1080 |      0.0035 |
-| MeanRating  |       0.0042 |    0.0019 |  0.0011 |  0.0040 |      0.0014 |
-| ItemKNN     |       0.3256 |    0.1511 |  0.2314 |  0.3719 |      0.3413 |
-| UserKNN     |       0.2414 |    0.1113 |  0.1552 |  0.2766 |      0.1286 |
-| SVD         |       0.2714 |    0.1229 |  0.1840 |  0.3142 |      0.0739 |
+| MostPopular |       0.0979 |    0.0437 |  0.0517 |  0.1109 |      0.0036 |
+| MeanRating  |       0.0036 |    0.0016 |  0.0014 |  0.0040 |      0.0014 |
+| ItemKNN     |       0.3355 |    0.1534 |  0.2425 |  0.3841 |      0.3589 |
+| UserKNN     |       0.2370 |    0.1085 |  0.1539 |  0.2729 |      0.1423 |
+| SVD         |       0.2756 |    0.1241 |  0.1858 |  0.3173 |      0.0759 |
 
 See [`benchmarks/goodbooks_results.md`](benchmarks/goodbooks_results.md) for the
 freshly-regenerated table.
@@ -70,9 +70,9 @@ from recommender_systems.svd import SVD
 from recommender_systems.metrics import ndcg_at_k, precision_at_k
 
 ratings = load_movielens_100k()
-train, test = split_ratings(ratings, test_size=0.2, random_state=0)
+train, test = split_ratings(ratings, test_size=0.2, random_state=20260527)
 
-model = SVD(n_factors=50, random_state=0).fit(train)
+model = SVD(n_factors=50, random_state=20260527).fit(train)
 
 users = test["user_id"].unique()
 predicted = [model.recommend(u, n=10) for u in users]

@@ -4,8 +4,15 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
 
-__all__ = ["build_user_item_matrix", "densest_subset", "holdout_per_user", "split_ratings"]
+__all__ = [
+    "build_sparse_user_item_matrix",
+    "build_user_item_matrix",
+    "densest_subset",
+    "holdout_per_user",
+    "split_ratings",
+]
 
 
 def build_user_item_matrix(
@@ -135,3 +142,35 @@ def holdout_per_user(
     train = ratings[~test_mask].reset_index(drop=True)
     test = ratings[test_mask].reset_index(drop=True)
     return train, test
+
+
+def build_sparse_user_item_matrix(
+    ratings: pd.DataFrame,
+    *,
+    user_col: str = "user_id",
+    item_col: str = "item_id",
+    rating_col: str = "rating",
+) -> tuple[sparse.csr_matrix, pd.Index, pd.Index]:
+    """Build a sparse user-item matrix plus its id-to-position index maps.
+
+    Scales to corpora where the dense :func:`build_user_item_matrix` would not fit in
+    memory (e.g. full goodbooks-10k). Duplicate (user, item) pairs are averaged, matching
+    the dense builder.
+
+    Returns
+    -------
+    tuple
+        ``(matrix, users, items)`` — a CSR matrix, an index mapping row to user id, and an
+        index mapping column to item id (use ``.get_loc(id)`` for the reverse direction).
+    """
+    missing = {user_col, item_col, rating_col} - set(ratings.columns)
+    if missing:
+        raise ValueError(f"ratings is missing required columns: {sorted(missing)}")
+    agg = ratings.groupby([user_col, item_col], sort=True)[rating_col].mean().reset_index()
+    user_codes, users = pd.factorize(agg[user_col], sort=True)
+    item_codes, items = pd.factorize(agg[item_col], sort=True)
+    matrix = sparse.csr_matrix(
+        (agg[rating_col].to_numpy(), (user_codes, item_codes)),
+        shape=(len(users), len(items)),
+    )
+    return matrix, pd.Index(users), pd.Index(items)

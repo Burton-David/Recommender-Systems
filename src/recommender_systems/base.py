@@ -1,15 +1,14 @@
-"""The common interface shared by all recommenders."""
+"""The common interface and shared bases for recommenders."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Hashable
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import pandas as pd
+import numpy as np
+import pandas as pd
 
-__all__ = ["Recommender"]
+__all__ = ["MatrixRecommender", "Recommender"]
 
 
 class Recommender(ABC):
@@ -51,3 +50,26 @@ class Recommender(ABC):
         list of Hashable
             Item ids ordered from most to least recommended.
         """
+
+
+class MatrixRecommender(Recommender):
+    """Base for recommenders backed by a dense user-item matrix.
+
+    Subclasses build ``self._matrix`` in :meth:`fit` and implement :meth:`_score_items`;
+    :meth:`recommend` then ranks the items a user has not yet rated by that score.
+    """
+
+    def __init__(self) -> None:
+        self._matrix = pd.DataFrame()
+
+    def recommend(self, user_id: Hashable, n: int = 10) -> list[Hashable]:
+        if user_id not in self._matrix.index:
+            return []
+        scores = np.array(self._score_items(user_id), dtype=float)
+        scores[self._matrix.loc[user_id].to_numpy() > 0] = -np.inf
+        order = np.argsort(-scores)
+        return [self._matrix.columns[i] for i in order if np.isfinite(scores[i])][:n]
+
+    @abstractmethod
+    def _score_items(self, user_id: Hashable) -> np.ndarray:
+        """Return a score for every item, aligned with ``self._matrix.columns``."""

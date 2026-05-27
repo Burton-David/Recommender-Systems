@@ -18,6 +18,10 @@
 
 ::: recommender_systems.svd
 
+### Content-based
+
+::: recommender_systems.content
+
 ## Data
 
 ### Loading benchmarks
@@ -31,3 +35,7 @@
 ## Evaluation metrics
 
 ::: recommender_systems.metrics
+
+## Persistence
+
+::: recommender_systems.persistence

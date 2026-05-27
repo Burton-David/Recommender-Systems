@@ -90,6 +90,7 @@ the precise definition.
 The [goodbooks-10k benchmark table](https://github.com/Burton-David/Recommender-Systems#benchmarks)
 runs exactly this pipeline (plus a few baselines) via
 `python -m scripts.benchmark_goodbooks`. On the 2500-user subsample,
-`HybridBook` lands within a few percent of pure `ItemKNN` on every accuracy
-metric and matches it on catalog coverage, while the content half opens a
+`HybridBook` lands in the top tier alongside `ItemKNN` — within roughly 5% on
+precision and catalog coverage, ~10% behind on NDCG and MAP — while the
+content half pulls its weight on items both signals agree on and opens a
 fallback path for cold-start books the CF half has never seen.

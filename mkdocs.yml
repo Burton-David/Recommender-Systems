@@ -49,6 +49,7 @@ plugins:
 nav:
   - Overview: index.md
   - Quickstart: quickstart.md
+  - Beyond accuracy: beyond_accuracy.md
   - API Reference: api.md
 
 markdown_extensions:

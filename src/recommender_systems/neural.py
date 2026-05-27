@@ -7,8 +7,6 @@ Optional — requires the ``neural`` extra:
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-
 import numpy as np
 import pandas as pd
 
@@ -20,7 +18,7 @@ except ImportError as exc:  # pragma: no cover - import guard
         "TwoTowerCF requires torch. Install with: pip install 'recommender-systems[neural]'"
     ) from exc
 
-from recommender_systems.base import _MatrixBackedRecommender
+from recommender_systems.base import _PredictedScoreRecommender
 from recommender_systems.data import build_user_item_matrix
 
 __all__ = ["TwoTowerCF"]
@@ -39,7 +37,7 @@ class _TwoTowerNet(nn.Module):
         return scores
 
 
-class TwoTowerCF(_MatrixBackedRecommender):
+class TwoTowerCF(_PredictedScoreRecommender):
     """Two-tower neural CF trained with a BPR-style ranking loss.
 
     Each user and item is a learned embedding; the score for a (user, item) pair is
@@ -77,7 +75,6 @@ class TwoTowerCF(_MatrixBackedRecommender):
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.random_state = random_state
-        self._predicted: np.ndarray = np.empty((0, 0))
 
     def fit(self, ratings: pd.DataFrame) -> TwoTowerCF:
         if self.random_state is not None:
@@ -123,6 +120,3 @@ class TwoTowerCF(_MatrixBackedRecommender):
             scores = model.user_embed.weight @ model.item_embed.weight.T
             self._predicted = scores.numpy()
         return self
-
-    def _user_scores(self, user_id: Hashable) -> np.ndarray:
-        return np.asarray(self._predicted[self._matrix.index.get_loc(user_id)])

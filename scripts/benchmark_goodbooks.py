@@ -25,7 +25,7 @@ from recommender_systems.books import build_hybrid_book_recommender
 from recommender_systems.datasets import load_goodbooks_10k, load_goodbooks_tags
 from scripts._harness import run_benchmark
 
-SEED = 0
+SEED = 20260527
 USER_SAMPLE = 2500
 OUT_DIR = Path(__file__).resolve().parent.parent / "benchmarks"
 

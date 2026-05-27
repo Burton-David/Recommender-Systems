@@ -16,7 +16,7 @@ from recommender_systems import SVD, ItemKNN, MeanRating, MostPopular, Recommend
 from recommender_systems.datasets import load_movielens_100k
 from scripts._harness import run_benchmark
 
-SEED = 0
+SEED = 20260527
 OUT_DIR = Path(__file__).resolve().parent.parent / "benchmarks"
 
 

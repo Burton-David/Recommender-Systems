@@ -58,7 +58,7 @@ def build_hybrid_book_recommender(
     tags: pd.DataFrame,
     *,
     collaborative: Recommender | None = None,
-    weights: tuple[float, float] = (1.0, 1.0),
+    weights: tuple[float, float] = (3.0, 1.0),
     rank_constant: int = 60,
     **vectorizer_kwargs: Any,
 ) -> HybridRecommender:
@@ -67,6 +67,12 @@ def build_hybrid_book_recommender(
     Defaults to ``ItemKNN(k=20)`` on the collaborative side because item-item kNN
     composes well with content signal (both rank items by similarity, just over
     different spaces). Pass any other ``Recommender`` to swap that out.
+
+    The default ``weights=(3.0, 1.0)`` puts the collaborative signal in charge —
+    on benchmarked datasets the dense CF signal is much stronger than the
+    tag-only content one, so equal weighting dilutes accuracy. The content half
+    still contributes useful boosts for items both signals agree on, plus a
+    cold-start fallback for items the CF half has never seen.
 
     Parameters
     ----------

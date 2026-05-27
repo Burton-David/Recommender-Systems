@@ -1,6 +1,6 @@
 """Book-specific helpers built on the goodbooks-10k loaders.
 
-Drop-in pipelines for the book showcase — turn the tag table from
+Drop-in pipelines for the book recommender — turn the tag table from
 ``load_goodbooks_tags`` into a content-based recommender in one call, so callers
 don't have to repeat the join + vectorize + ``ContentBased`` boilerplate.
 """

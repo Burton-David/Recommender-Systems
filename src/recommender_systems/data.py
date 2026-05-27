@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-__all__ = ["build_user_item_matrix", "train_test_split"]
+__all__ = ["build_user_item_matrix", "split_interactions"]
 
 
 def build_user_item_matrix(
@@ -44,13 +44,16 @@ def build_user_item_matrix(
     return matrix
 
 
-def train_test_split(
+def split_interactions(
     ratings: pd.DataFrame,
     *,
     test_size: float = 0.2,
     random_state: int | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split interactions into train and test sets by random row sampling.
+
+    Named ``split_interactions`` rather than ``train_test_split`` so it never
+    collides with the differently-shaped ``sklearn.model_selection.train_test_split``.
 
     Parameters
     ----------

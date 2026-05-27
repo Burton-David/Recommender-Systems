@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-__all__ = ["build_user_item_matrix", "split_ratings"]
+__all__ = ["build_user_item_matrix", "densest_subset", "split_ratings"]
 
 
 def build_user_item_matrix(
@@ -77,3 +77,28 @@ def split_ratings(
     train = ratings.iloc[train_rows].reset_index(drop=True)
     test = ratings.iloc[test_rows].reset_index(drop=True)
     return train, test
+
+
+def densest_subset(
+    ratings: pd.DataFrame,
+    *,
+    n_users: int = 1000,
+    n_items: int = 1000,
+    user_col: str = "user_id",
+    item_col: str = "item_id",
+) -> pd.DataFrame:
+    """Restrict ratings to the most active users and most popular items.
+
+    Lets dense-matrix algorithms run on large datasets (e.g. goodbooks-10k) without
+    materializing a full user-by-item matrix. Keeps the ``n_users`` users with the most
+    interactions and the ``n_items`` most-interacted items, then the rows in both.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered ratings.
+    """
+    top_users = ratings[user_col].value_counts().head(n_users).index
+    top_items = ratings[item_col].value_counts().head(n_items).index
+    keep = ratings[user_col].isin(top_users) & ratings[item_col].isin(top_items)
+    return ratings[keep].reset_index(drop=True)

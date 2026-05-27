@@ -19,5 +19,8 @@ venv/
 coverage.xml
 htmlcov/
 
+# Docs build output
+site/
+
 # OS / editor
 .DS_Store

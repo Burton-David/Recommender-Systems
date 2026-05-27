@@ -50,8 +50,8 @@ class BPR(_MatrixBackedRecommender):
         self.learning_rate = learning_rate
         self.reg = reg
         self.random_state = random_state
-        self._user_factors = np.empty((0, 0))
-        self._item_factors = np.empty((0, 0))
+        self._user_factors: np.ndarray = np.empty((0, 0))
+        self._item_factors: np.ndarray = np.empty((0, 0))
 
     def fit(self, ratings: pd.DataFrame) -> BPR:
         self._matrix = build_user_item_matrix(ratings, fill_value=0.0)

@@ -1,5 +1,6 @@
 """Recommender Systems: classic and modern recommendation algorithms."""
 
+from recommender_systems.als import ALS
 from recommender_systems.base import Recommender
 from recommender_systems.baselines import MeanRating, MostPopular
 from recommender_systems.bpr import BPR
@@ -18,6 +19,7 @@ from recommender_systems.svd import SVD
 __version__ = "0.1.0"
 
 __all__ = [
+    "ALS",
     "BPR",
     "SVD",
     "ContentBased",

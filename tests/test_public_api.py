@@ -2,6 +2,7 @@ import recommender_systems
 from recommender_systems import Recommender
 
 EXPECTED_RECOMMENDERS = [
+    "ALS",
     "BPR",
     "ContentBased",
     "HybridRecommender",

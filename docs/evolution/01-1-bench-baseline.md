@@ -30,7 +30,7 @@ Three deliverables:
 
 | Option | Rejected because |
 |---|---|
-| Skip Phase 1.1, start Rust rewrite of ALS | The original plan assumed ALS was the hot path. Without numbers this is an opinion, not a finding. The whole portfolio thesis depends on "measured first." |
+| Skip Phase 1.1, start Rust rewrite of ALS | Without numbers, "ALS is the hot path" is an opinion. The whole rewrite plan rests on knowing which inner loop actually dominates. |
 | Use `timeit` ad-hoc, don't commit a suite | Reproducibility matters. A reviewer should be able to run the suite and see whether the claims hold. Ad-hoc timings rot. |
 | Run benchmarks in CI | Wall-clock numbers on GitHub Actions are too noisy to gate on. The committed baseline is the source of truth; CI verifies correctness, not speed. |
 | Use `asv` (airspeed velocity) instead of `pytest-benchmark` | `asv` is the right tool when you want a time-series of regression detection across commits. `pytest-benchmark` is right when you want one snapshot per phase. We have phases, not a continuous regression budget. |
@@ -51,8 +51,7 @@ sparse work on goodbooks-full puts it on the critical path.
 
 This course-correction is the *reason* Phase 1.1 exists. If the data had
 confirmed the original guess we'd have proceeded; instead it pointed at
-a better target, and the portfolio narrative is stronger for showing the
-adjustment.
+a better target.
 
 ## What's not in scope
 

@@ -114,5 +114,3 @@ profiling on goodbooks-full — once Phase 3's sparse work makes that
 tractable — shows it on the critical path. If it doesn't, we let ALS be.
 
 This is exactly the kind of course-correction Phase 1.1 exists to enable.
-The portfolio narrative reads cleaner this way too: *measured first,
-then targeted the actual hot path* beats *guessed correctly the first time*.

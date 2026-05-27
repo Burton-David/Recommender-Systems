@@ -1,12 +1,14 @@
 """Command-line interface for the recommender_systems library.
 
 Installed as the ``recsys`` console script via the project's ``[project.scripts]``
-entry point. Two subcommands so far::
+entry point. Subcommands::
 
     recsys recommend --algo item-knn --user 42 --n 10
     recsys evaluate  --algo svd
+    recsys list-algos
 
-Both train on MovieLens 100k (downloaded and cached on first use).
+``recommend`` and ``evaluate`` train on MovieLens 100k (downloaded and cached on
+first use). ``--version`` prints the installed package version.
 """
 
 from __future__ import annotations

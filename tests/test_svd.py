@@ -1,4 +1,5 @@
 import pandas as pd
+from scipy import sparse
 
 from recommender_systems.base import Recommender
 from recommender_systems.svd import SVD
@@ -29,3 +30,11 @@ def test_svd_excludes_seen_and_handles_unknown_user():
     model = SVD(random_state=0).fit(sample_ratings())
     assert "a" not in model.recommend(4)
     assert model.recommend(999) == []
+
+
+def test_svd_stores_sparse_matrix():
+    # Regression: pins the sparse internal representation so a future change
+    # can't silently revert to dense and reintroduce the goodbooks-10k memory
+    # blowup the Phase 3 rewrite fixed.
+    model = SVD(random_state=0).fit(sample_ratings())
+    assert sparse.issparse(model._matrix)

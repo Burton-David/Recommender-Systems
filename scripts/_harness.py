@@ -106,7 +106,7 @@ def run_benchmark(
     table_path = out_dir / f"{file_stem}.md"
     chart_path = out_dir / f"{file_stem}.png"
 
-    body = results.map(lambda v: f"{v:.4f}").to_markdown()
+    body = results.to_markdown(floatfmt=".4f")
     extra = f"\n{notes.strip()}\n" if notes else ""
     table_path.write_text(
         f"# {name} — top-{k} evaluation\n\n"

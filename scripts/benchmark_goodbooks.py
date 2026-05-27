@@ -9,7 +9,7 @@ Usage::
 
 The full goodbooks-10k corpus has ~53k users and ~6M interactions; a dense user-user
 similarity at that scale would need ~22 GB of memory. The benchmark subsamples to a
-deterministic seed-picked 5000-user slice (~520k interactions) so every algorithm —
+deterministic seed-picked 2500-user slice (~280k interactions) so every algorithm —
 including UserKNN — fits in memory and runs in a couple of minutes on a laptop.
 """
 

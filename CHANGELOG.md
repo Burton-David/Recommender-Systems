@@ -8,6 +8,12 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- Sparse-aware `UserKNN`, `ItemKNN`, and `SVD` (`_SparseMatrixBackedRecommender`
+  base). `UserKNN` uses `sklearn.neighbors.NearestNeighbors` to avoid the
+  full users-by-users similarity; `ItemKNN` operates on a sparse item-item
+  cosine matrix; `SVD` runs `TruncatedSVD` on the CSR matrix directly. This
+  closes #77 and lets the three algorithms run goodbooks-10k at full scale.
+  See `docs/evolution/03-sparse-recommenders.md`.
 - Rust+PyO3 kernel (`crates/recsys-kernels/`) for BPR's inner SGD loop.
   `BPR.fit` now calls into the compiled extension and falls back to the
   pure-Python loop only when the extension isn't importable.
@@ -20,6 +26,13 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   source now requires a Rust toolchain; CONTRIBUTING.md has the setup.
 - `recommender_systems.__version__` is now sourced from installed
   package metadata rather than hard-coded in `__init__.py`.
+
+### Backwards-incompatible
+
+- Pickles of `UserKNN` / `ItemKNN` / `SVD` written before this release
+  don't load on the new code — the internal matrix representation moved
+  from dense `pd.DataFrame` to sparse CSR. Re-fit and re-save. Pre-1.0;
+  no migration path.
 
 ## [0.1.0]
 

@@ -35,6 +35,8 @@ and excluded from CI — wall-clock timings are too noisy on shared runners.
 100,000 ratings, 943 users, 1,682 items. Iterative algorithms use 5 epochs
 and `n_factors=16` so the suite runs in under a minute.
 
+### Original Python baseline (pre–Phase 2)
+
 | Algorithm     | Mean fit time | vs. MostPopular |
 |---------------|---------------|-----------------|
 | MostPopular   | 16.1 ms       | 1.0×            |
@@ -45,9 +47,21 @@ and `n_factors=16` so the suite runs in under a minute.
 | ALS (16/5)    | 473.2 ms      | 29×             |
 | **BPR (16/5)**| **4,503.4 ms**| **280×**        |
 
-**BPR dominates by an order of magnitude.** Everything else fits in under
-half a second; BPR alone takes 4.5 seconds for the same dataset with the
-same epoch budget.
+**BPR dominated by an order of magnitude** — a 4.5 s fit for the same dataset
+and epoch budget as algorithms that took under 200 ms. That gap is what
+[Phase 2](../docs/evolution/02-rust-kernel-bpr.md) closed.
+
+### After Phase 2 (Rust kernel for BPR's SGD inner loop)
+
+| Algorithm     | Pre-Phase 2 | Post-Phase 2 (kernel) | Speedup |
+|---------------|------------:|----------------------:|--------:|
+| BPR (16/5)    | 4,503 ms    | ~88 ms                | **~51×** |
+
+Hardware-dependent (~88 ms was measured on an Apple-Silicon laptop with the
+release build); the speedup ratio is what carries. BPR is now in the same
+weight class as ALS and the neighborhood algorithms. Running
+`pytest tests/benchmarks/ -m benchmark` against the current `main` records
+the kernel-backed timing into the suite's own JSON output for re-comparison.
 
 ## Where BPR spends its time
 
@@ -97,20 +111,15 @@ A pre-Phase-1.1 expectation was that ALS would be the obvious Phase 2
 target. The numbers say otherwise: ALS is already fast enough that
 rewriting it would not be the highest-leverage move.
 
-## What this means for Phase 2
+## What Phase 1.1 pointed at, and what Phase 2 actually did
 
-The original plan named ALS as Phase 2's target. The data points elsewhere.
+The original plan named ALS as Phase 2's target. The data pointed elsewhere:
 
-| Candidate           | Speed today | Inner loop characteristics       | Phase 2 priority |
-|---------------------|-------------|----------------------------------|------------------|
-| **BPR `_step`**     | 4.5 s       | 500k Python calls × tiny vector op | **First**        |
-| ALS `_solve_side`   | 0.5 s       | 13k Python calls × 16×16 linalg    | Defer, possibly Phase 3 with sparse work |
-| ItemKNN cosine sim  | 0.14 s      | One sklearn call, already C-backed | Skip — no win available |
-| Everything else     | < 0.1 s     | Negligible                       | Skip            |
-
-The Phase 2 PR should rewrite `BPR._step` (and the negative-resample loop
-that surrounds it) in Rust+PyO3. ALS becomes a Phase 3 candidate *if*
-profiling on goodbooks-full — once Phase 3's sparse work makes that
-tractable — shows it on the critical path. If it doesn't, we let ALS be.
+| Candidate           | Pre-Phase 2 | Inner loop characteristics       | Action |
+|---------------------|-------------|----------------------------------|--------|
+| **BPR `_step`**     | 4.5 s       | 500k Python calls × tiny vector op | **Rewrote in Rust — Phase 2 shipped.** |
+| ALS `_solve_side`   | 0.5 s       | 13k Python calls × 16×16 linalg    | Deferred to Phase 3 *if* sparse goodbooks-full work puts it on the critical path. |
+| ItemKNN cosine sim  | 0.14 s      | One sklearn call, already C-backed | Skip — no win available. |
+| Everything else     | < 0.1 s     | Negligible                       | Skip. |
 
 This is exactly the kind of course-correction Phase 1.1 exists to enable.

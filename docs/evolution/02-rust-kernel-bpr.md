@@ -63,13 +63,16 @@ Internals:
   always implemented, with the same regularization term.
 - RNG is PCG64 (`rand_pcg`) seeded by the `random_state` Python passes in.
 
-Performance numbers from the local rebuild after Phase 2:
+Performance numbers (release build on Apple-Silicon):
 
 | | Before (Python) | After (Rust kernel) | Speedup |
 |---|---|---|---|
-| BPR fit, ML-100k, 5 epochs | 4,503 ms | ~150 ms | ~30× |
+| BPR fit, ML-100k, 5 epochs | 4,503 ms | ~88 ms | ~51× |
 
-*(Numbers updated in `benchmarks/profile.md` once the wheel builds in CI.)*
+Hardware-dependent; the speedup ratio is what carries. The committed
+`tests/test_fit_speed.py::test_bpr_fit` benchmark now exercises the kernel
+path, so the suite records a fresh number every time it runs. Full table
+in `benchmarks/profile.md`.
 
 ## What's not in scope
 
@@ -80,10 +83,19 @@ Performance numbers from the local rebuild after Phase 2:
 - **`recommend()` hot path.** Top-N selection over the dense score vector is
   fast enough at MovieLens scale; the win there only matters once Phase 3
   unlocks larger catalogs.
-- **Bit-equivalence with the Python loop.** The two implementations consume
-  RNG bytes in different orders, so the float arrays differ. Regression
-  tests assert *recommendation-quality* equivalence — precision@10 and
-  recall@10 must clear conservative floors on the canonical split.
+- **Bit-equivalence with the Python loop.** Two independent reasons the
+  float arrays diverge:
+  *(a)* the paths consume RNG bytes in different orders, so the permutations
+  and negative samples won't match; and
+  *(b)* the kernel snapshots the user row before any update so the positive
+  and negative item updates use the *pre-update* user vector (textbook
+  simultaneous SGD), whereas `BPR._step` mutates `self._user_factors[u]`
+  in place and the subsequent item updates inherit the *post-update* user
+  via numpy view aliasing. The kernel's formulation is the standard one;
+  the Python aliasing is a quirk of how the in-place updates were written.
+  Regression tests assert *recommendation-quality* equivalence —
+  precision@10 and recall@10 must clear conservative floors on the
+  canonical split — instead of bit-equivalence.
 - **Hogwild-style parallel SGD.** Plausible follow-up if a single-machine
   training bottleneck appears. Skipped now because (a) it adds
   non-determinism, and (b) the sequential Rust loop already closes the
@@ -95,6 +107,9 @@ Performance numbers from the local rebuild after Phase 2:
 it runs the original pure-Python loop. This keeps the library usable in
 environments where the compiled extension didn't ship — sdist installs
 without a Rust toolchain, exotic platforms not covered by
-`cibuildwheel`, etc. The fallback path is exercised by every existing
-`tests/test_bpr.py` test in CI, since CI runs both with and without the
-extension depending on whether the Rust install step succeeded.
+`cibuildwheel`, etc.
+
+CI builds the extension on every leg, so the kernel path is always exercised.
+The fallback path is tested by `tests/test_bpr_fallback.py`, which suppresses
+the `_kernels` import via `sys.modules` before importing `BPR` and runs the
+same training contract end-to-end — same CI run, no extra job.

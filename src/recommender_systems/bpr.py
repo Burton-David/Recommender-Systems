@@ -62,14 +62,16 @@ class BPR(_MatrixBackedRecommender):
         self._user_factors = rng.normal(0.0, 0.01, size=(n_users, self.n_factors))
         self._item_factors = rng.normal(0.0, 0.01, size=(n_items, self.n_factors))
 
-        positives = np.argwhere(observed)
+        # Restrict training to users that have at least one unobserved item —
+        # without that guarantee the negative-resample loop below never terminates.
+        has_negatives = observed.sum(axis=1) < n_items
+        positives = np.argwhere(observed & has_negatives[:, None])
         for _ in range(self.epochs):
             order = rng.permutation(len(positives))
             negatives = rng.integers(0, n_items, size=len(positives))
             for idx, neg in zip(order, negatives, strict=True):
                 u, i = positives[idx]
                 j = int(neg)
-                # Resample until we land on an unobserved item for this user.
                 while observed[u, j]:
                     j = int(rng.integers(0, n_items))
                 self._step(u, int(i), j)
@@ -80,7 +82,7 @@ class BPR(_MatrixBackedRecommender):
         i_vec = self._item_factors[i]
         j_vec = self._item_factors[j]
         margin = u_vec @ (i_vec - j_vec)
-        sig = 1.0 / (1.0 + np.exp(margin))  # sigmoid(-margin); avoids overflow at large margin
+        sig = 1.0 / (1.0 + np.exp(margin))  # sigmoid(-margin); saturates safely at the tails
         lr = self.learning_rate
         self._user_factors[u] += lr * (sig * (i_vec - j_vec) - self.reg * u_vec)
         self._item_factors[i] += lr * (sig * u_vec - self.reg * i_vec)

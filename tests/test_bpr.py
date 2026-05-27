@@ -50,3 +50,17 @@ def test_bpr_is_reproducible():
     a = BPR(n_factors=4, epochs=10, random_state=42).fit(ratings).recommend(0, n=5)
     b = BPR(n_factors=4, epochs=10, random_state=42).fit(ratings).recommend(0, n=5)
     assert a == b
+
+
+def test_bpr_terminates_when_a_user_has_rated_every_item():
+    # Regression test for #58 review: previously the negative-sampling while
+    # loop would spin forever on any user with no unobserved items.
+    rows = [(0, item) for item in ("a", "b", "c")]  # user 0 has rated every item
+    rows += [(1, "a"), (2, "b")]  # well-behaved users still drive the training
+    ratings = pd.DataFrame(rows, columns=["user_id", "item_id"]).assign(rating=1)
+    # Should complete without hanging; the assertion is implicit.
+    model = BPR(n_factors=4, epochs=5, random_state=0).fit(ratings)
+    # User 0 has nothing left to recommend — exclude-seen masks everything.
+    assert model.recommend(0, n=5) == []
+    # Other users still get recommendations.
+    assert model.recommend(1, n=2)

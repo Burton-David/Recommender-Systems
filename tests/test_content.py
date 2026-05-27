@@ -60,3 +60,28 @@ def test_handles_items_missing_from_features():
     model = ContentBased(partial_features).fit(ratings)
     # User 1 still prefers d (the action item that's in the feature table).
     assert model.recommend(1, n=1) == ["d"]
+
+
+def test_explain_returns_top_shared_features():
+    # User 1 rated "a" (pure action). Recommending "d" (also pure action)
+    # should attribute the score to the "action" feature.
+    model = ContentBased(sample_item_features()).fit(sample_ratings())
+    reason = model.explain(user_id=1, item_id="d")
+    assert reason == "action"
+
+
+def test_explain_unknown_user_or_item_returns_empty():
+    model = ContentBased(sample_item_features()).fit(sample_ratings())
+    assert model.explain(user_id=999, item_id="d") == ""
+    assert model.explain(user_id=1, item_id="ghost") == ""
+
+
+def test_recommend_with_reasons_pairs_each_item_with_explanation():
+    model = ContentBased(sample_item_features()).fit(sample_ratings())
+    results = model.recommend_with_reasons(user_id=1, n=2)
+    assert len(results) == 2
+    items, reasons = zip(*results, strict=True)
+    # Same ranking as plain recommend.
+    assert list(items) == model.recommend(1, n=2)
+    # The first (best-matching) item gets a non-empty reason.
+    assert reasons[0] != ""

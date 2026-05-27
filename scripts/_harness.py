@@ -7,6 +7,7 @@ writes a markdown table + chart to ``out_dir``. Individual benchmark scripts und
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ def _evaluate(
     model: Recommender,
     train: pd.DataFrame,
     test: pd.DataFrame,
-    catalog: set,
+    catalog: set[Hashable],
     *,
     k: int,
 ) -> dict[str, float]:

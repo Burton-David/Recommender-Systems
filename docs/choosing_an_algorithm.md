@@ -41,8 +41,9 @@ Three signs:
    per-recommendation reason ("shared tags: fantasy, magic"), which CF
    can't.
 
-For book recommendation specifically, `recommender_systems.books.build_hybrid_book_recommender`
-wraps `ItemKNN + tag-based ContentBased` behind a single call.
+`recommender_systems.books.build_tag_recommender` turns a goodbooks-style tag
+table into a `ContentBased` via TF-IDF in one call. Compose it with a CF
+recommender by hand through `HybridRecommender(...)` for a hybrid pipeline.
 
 ## When you need a learned latent space
 

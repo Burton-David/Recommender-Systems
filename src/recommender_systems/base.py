@@ -25,7 +25,7 @@ class Recommender(ABC):
 
         Parameters
         ----------
-        ratings:
+        ratings
             Interaction data with at least ``user_id``, ``item_id`` and ``rating`` columns.
 
         Returns
@@ -40,9 +40,9 @@ class Recommender(ABC):
 
         Parameters
         ----------
-        user_id:
+        user_id
             The user to recommend for.
-        n:
+        n
             Maximum number of items to return.
 
         Returns

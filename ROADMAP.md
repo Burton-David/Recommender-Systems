@@ -34,7 +34,6 @@ Worked examples, benchmarks across algorithms, and a published docs site.
 
 ## Known issues (carried over from the original code)
 
-- `model_based_collaborative_filter.py` executes at import time instead of inside a guard.
 - `get_recommended_items` has an inconsistent signature across modules.
 - The README has duplicated and mismatched algorithm descriptions.
 - No input validation and no tests on any existing module.

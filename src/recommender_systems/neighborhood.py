@@ -57,18 +57,18 @@ class ItemKNN(_NeighborhoodCF):
     """Score items by similarity to the items a user has already rated."""
 
     def _similarity_of(self, matrix: np.ndarray) -> np.ndarray:
-        return cosine_similarity(matrix.T)
+        return np.asarray(cosine_similarity(matrix.T))
 
     def _scores(self, user_id: Hashable) -> np.ndarray:
-        return self._similarity @ self._matrix.loc[user_id].to_numpy()
+        return np.asarray(self._similarity @ self._matrix.loc[user_id].to_numpy())
 
 
 class UserKNN(_NeighborhoodCF):
     """Score items by the ratings of a user's nearest neighbors."""
 
     def _similarity_of(self, matrix: np.ndarray) -> np.ndarray:
-        return cosine_similarity(matrix)
+        return np.asarray(cosine_similarity(matrix))
 
     def _scores(self, user_id: Hashable) -> np.ndarray:
         weights = self._similarity[self._matrix.index.get_loc(user_id)]
-        return weights @ self._matrix.to_numpy() / (weights.sum() or 1.0)
+        return np.asarray(weights @ self._matrix.to_numpy() / (weights.sum() or 1.0))

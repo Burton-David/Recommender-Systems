@@ -1,39 +1,34 @@
 # Roadmap
 
-Turn this collection of scripts into a polished, modern, well-tested recommender systems
-library worth showcasing.
+A polished, modern, well-tested recommender systems library — and a real book recommender
+built on top of it.
 
-## Phase 0 — Foundation (in progress)
+## Shipped
 
-Packaging (`pyproject.toml`, `src/` layout), Ruff lint/format, pytest, CI, and contributor
-docs. No behavior change yet.
+- **Packaging & tooling:** `src/` layout, `pyproject.toml`, Ruff lint/format, mypy, pytest,
+  CI across Python 3.10–3.12, and a published docs site.
+- **Unified API:** a `Recommender` interface (`fit` / `recommend`) so every algorithm is
+  interchangeable, a `MatrixBackedRecommender` base, and shared data utilities
+  (`build_user_item_matrix`, `split_ratings`, `holdout_per_user`, `densest_subset`).
+- **Algorithms:** most-popular & mean-rating baselines, user/item k-NN, SVD matrix
+  factorization, implicit-feedback BPR, content-based (TF-IDF / count / binary features),
+  and a reciprocal-rank-fusion hybrid.
+- **Evaluation:** precision@k, recall@k, MAP, NDCG, plus beyond-accuracy metrics
+  (diversity, novelty, coverage, serendipity).
+- **Reproducible benchmarks** on MovieLens 100k and goodbooks-10k (committed tables +
+  charts), a `recsys` CLI, and model persistence.
 
-## Phase 1 — Migrate the legacy modules
+## In progress — the book recommender showcase (epic #50)
 
-Move each existing script into `recommender_systems/`, with a clean signature, type hints,
-docstrings, input validation, and tests. Remove import-time side effects. One module per PR.
+A book recommender that powers a real e-reader app: goodbooks-10k benchmark, tag-based
+content recommendation, two-tower neural CF, hybrid collaborative+content, explainable
+recommendations, and a worked demo.
 
-## Phase 2 — A unified API
+## Next
 
-Introduce a common interface (e.g. a `Recommender` base with `fit` / `recommend`) so every
-algorithm is interchangeable, plus shared utilities for building user–item matrices and
-train/test splits.
-
-## Phase 3 — More algorithms and evaluation
-
-- Baselines: most-popular, mean-rating.
-- Neighborhood: user/item kNN collaborative filtering.
-- Matrix factorization: SVD, ALS, and an implicit-feedback model (BPR).
-- Content-based: a unified TF-IDF / embeddings recommender.
-- Hybrid: combine collaborative and content signals.
-- Evaluation: precision@k, recall@k, MAP, NDCG, coverage, and a `MovieLens` loader.
-
-## Phase 4 — Documentation and examples
-
-Worked examples, benchmarks across algorithms, and a published docs site.
-
-## Known issues (carried over from the original code)
-
-- `get_recommended_items` has an inconsistent signature across modules.
-- The README has duplicated and mismatched algorithm descriptions.
-- No input validation and no tests on any existing module.
+- **Scale:** scipy-sparse user-item matrices so the neighborhood and matrix-factorization
+  models run on the full goodbooks-10k corpus, not just a subsample.
+- **More algorithms:** ALS.
+- **Product path (deferred):** an Open Library metadata client and a first-party
+  reading-signal model for the e-reader — commercial-safe, no scraped data.
+- **Release:** publish to PyPI.

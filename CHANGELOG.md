@@ -6,6 +6,16 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+### Documented
+
+- `docs/evolution/05-go-serving-postmortem.md` — postmortem of the Go
+  serving experiment. New `serving/` directory holds the matching Go
+  stdlib HTTP service, FastAPI baseline, model exporter, and an
+  httpx-async load generator. Verdict: Go doesn't pay off for this
+  library's workload; numpy + BLAS beats hand-written Go matrix math
+  on the per-request CPU side, and Go's memory edge is too small to
+  matter at the scales targeted.
+
 ### Added
 
 - Rust+PyO3 kernel (`crates/recsys-kernels/`) for BPR's inner SGD loop.

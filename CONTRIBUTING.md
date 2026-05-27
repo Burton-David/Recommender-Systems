@@ -4,12 +4,24 @@ Thanks for contributing. This guide keeps the codebase consistent and reviewable
 
 ## Development setup
 
+The build now includes a small Rust extension (`crates/recsys-kernels/`) for the
+inner SGD loop of BPR — see `docs/evolution/02-rust-kernel-bpr.md` for the
+reasoning. That makes a Rust toolchain a one-time prerequisite alongside the
+Python venv:
+
 ```bash
+# Rust toolchain (one-time; macOS Homebrew shown, rustup works equivalently):
+brew install rust   # or: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 pre-commit install
 ```
+
+`pip install -e .` invokes `maturin` to compile the Rust extension and link it
+into the editable install. Released wheels on PyPI ship pre-built per platform;
+end users never see Rust.
 
 The package uses a `src/` layout; the importable package is `recommender_systems`.
 

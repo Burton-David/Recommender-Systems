@@ -1,5 +1,7 @@
 """Recommender Systems: classic and modern recommendation algorithms."""
 
+from importlib.metadata import version as _version
+
 from recommender_systems.als import ALS
 from recommender_systems.base import Recommender
 from recommender_systems.baselines import MeanRating, MostPopular
@@ -16,7 +18,7 @@ from recommender_systems.hybrid import HybridRecommender
 from recommender_systems.neighborhood import ItemKNN, UserKNN
 from recommender_systems.svd import SVD
 
-__version__ = "0.1.0"
+__version__ = _version("recommender-systems")
 
 __all__ = [
     "ALS",

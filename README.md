@@ -14,8 +14,8 @@ interchangeable. Typed, tested, and benchmarked.
 
 ## Benchmarks
 
-Top-10 evaluation on MovieLens 100k (80/20 seeded split). Reproduce with
-`pip install -e ".[dev,benchmarks]" && python scripts/benchmark.py`.
+Top-10 evaluation on **MovieLens 100k** (80/20 seeded split). Reproduce with
+`pip install -e ".[dev,benchmarks]" && python -m scripts.benchmark`.
 
 ![MovieLens 100k benchmark](benchmarks/results.png)
 
@@ -29,6 +29,22 @@ Top-10 evaluation on MovieLens 100k (80/20 seeded split). Reproduce with
 
 See [`benchmarks/results.md`](benchmarks/results.md) for the table regenerated from
 the latest run.
+
+Top-10 evaluation on **goodbooks-10k** (2500-user subsample, 80/20 seeded split).
+Reproduce with `python -m scripts.benchmark_goodbooks`.
+
+![goodbooks-10k benchmark](benchmarks/goodbooks_results.png)
+
+|             | precision@10 | recall@10 |  MAP@10 | NDCG@10 | coverage@10 |
+|:------------|-------------:|----------:|--------:|--------:|------------:|
+| MostPopular |       0.0985 |    0.0434 |  0.0482 |  0.1080 |      0.0035 |
+| MeanRating  |       0.0042 |    0.0019 |  0.0011 |  0.0040 |      0.0014 |
+| ItemKNN     |       0.3256 |    0.1511 |  0.2314 |  0.3719 |      0.3413 |
+| UserKNN     |       0.2414 |    0.1113 |  0.1552 |  0.2766 |      0.1286 |
+| SVD         |       0.2714 |    0.1229 |  0.1840 |  0.3142 |      0.0739 |
+
+See [`benchmarks/goodbooks_results.md`](benchmarks/goodbooks_results.md) for the
+freshly-regenerated table.
 
 ## Install
 

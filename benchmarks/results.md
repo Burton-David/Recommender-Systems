@@ -1,6 +1,6 @@
 # MovieLens 100k — top-10 evaluation
 
-Reproduce with `python scripts/benchmark.py` (seed = 0, 80/20 split).
+Reproduce with `python -m scripts.benchmark` (seed = 0, 80/20 split).
 
 |             |   precision@10 |   recall@10 |   MAP@10 |   NDCG@10 |   coverage@10 |
 |:------------|---------------:|------------:|---------:|----------:|--------------:|

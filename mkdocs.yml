@@ -50,6 +50,7 @@ nav:
   - Overview: index.md
   - Quickstart: quickstart.md
   - Beyond accuracy: beyond_accuracy.md
+  - Choosing an algorithm: choosing_an_algorithm.md
   - API Reference: api.md
 
 markdown_extensions:

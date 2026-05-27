@@ -47,6 +47,7 @@ docs = [
 dev = [
     "mypy>=1.8",
     "pytest>=7.4",
+    "pytest-benchmark>=4.0",
     "pytest-cov>=4.1",
     "ruff>=0.4",
 ]
@@ -74,9 +75,12 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "N", "RUF"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers -m 'not benchmark'"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "benchmark: timing-sensitive benchmark; skipped by default, run with -m benchmark",
+]
 
 [tool.mypy]
 python_version = "3.10"

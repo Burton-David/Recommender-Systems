@@ -10,10 +10,10 @@ from recommender_systems.metrics import ndcg_at_k, precision_at_k
 
 # 1. Load and split.
 ratings = load_movielens_100k()
-train, test = split_ratings(ratings, test_size=0.2, random_state=0)
+train, test = split_ratings(ratings, test_size=0.2, random_state=20260527)
 
 # 2. Fit.
-model = SVD(n_factors=50, random_state=0).fit(train)
+model = SVD(n_factors=50, random_state=20260527).fit(train)
 
 # 3. Recommend for the held-out users.
 test_users = test["user_id"].unique()

@@ -8,7 +8,9 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
-**This library contains a variety of different recommender systems implemented in Python.**
+A collection of classic and modern recommender system algorithms with a unified API:
+every algorithm implements `fit(ratings)` and `recommend(user, n)`, so they're
+interchangeable. Typed, tested, and benchmarked.
 
 ## Benchmarks
 
@@ -25,60 +27,81 @@ Top-10 evaluation on MovieLens 100k (80/20 seeded split). Reproduce with
 | UserKNN     |       0.3175 |    0.2123 |  0.2503 |  0.3881 |      0.2134 |
 | SVD         |       0.3016 |    0.2134 |  0.2283 |  0.3675 |      0.2717 |
 
-See [`benchmarks/results.md`](benchmarks/results.md) for the same table generated
-from a fresh run.
+See [`benchmarks/results.md`](benchmarks/results.md) for the table regenerated from
+the latest run.
 
-1. user_based_cosine_similarity.py
-2. item_based_dot_product.py
-3. demographic_based_mean_rating.py
-4. context_aware_mean_rating.py
-5. hybrid_context_user.py
-6. content_based_binary_filter.py
-7. content_based_cosine_similarity.py
-8. content_based_word_counts.py
-9. content_based_word_embeddings.py
-10. demographic_based_filtering.py
+## Install
 
-## Using the Library
-To use any of the included files, simply import the file and call the get_recommended_items() function with the appropriate arguments.
-
-For example, to use the user-based collaborative filtering recommender using cosine similarity:
+```bash
+git clone https://github.com/Burton-David/Recommender-Systems
+cd Recommender-Systems
+pip install -e .
 ```
-import user_based_cosine_similarity
 
-recommendations = user_based_cosine_similarity.get_recommended_items(df, 1)
+Optional extras:
+
+- `[embeddings]` — gensim for word-embedding features
+- `[benchmarks]` — matplotlib + tabulate for `scripts/benchmark.py`
+- `[docs]` — mkdocs-material for building the docs site
+- `[dev]` — ruff, mypy, pytest, pytest-cov
+
+## Quickstart
+
+```python
+from recommender_systems import split_ratings
+from recommender_systems.datasets import load_movielens_100k
+from recommender_systems.svd import SVD
+from recommender_systems.metrics import ndcg_at_k, precision_at_k
+
+ratings = load_movielens_100k()
+train, test = split_ratings(ratings, test_size=0.2, random_state=0)
+
+model = SVD(n_factors=50, random_state=0).fit(train)
+
+users = test["user_id"].unique()
+predicted = [model.recommend(u, n=10) for u in users]
+truth = test.groupby("user_id")["item_id"].agg(set)
+actual = [truth.get(u, set()) for u in users]
+
+print(f"precision@10 = {precision_at_k(predicted, actual, k=10):.3f}")
+print(f"NDCG@10      = {ndcg_at_k(predicted, actual, k=10):.3f}")
 ```
-The **df** parameter should be a pandas DataFrame containing ratings data with columns for 'user_id', 'item_id', and 'rating'. The second parameter is the ID of the user or item for which you want to get recommendations.
 
-Each file has its own specific requirements for the data and parameters, so be sure to read the docstrings for more information.
+Swap `SVD` for `UserKNN`, `MostPopular`, etc. — the rest of the script is
+unchanged. Full quickstart at
+<https://burton-david.github.io/Recommender-Systems/quickstart/>.
 
-### File Descriptions
-user_based_cosine_similarity.py
-This file contains a user-based collaborative filtering recommender that uses cosine similarity to compute the similarity
+There's also a CLI:
 
-### item_based_dot_product.py
-This file contains an item-based collaborative filtering recommender that uses the dot product of ratings to compute the similarity between items. Given an item's ID, the function returns the top N recommended items for that item based on the dot product of their ratings with other items.
+```bash
+recsys recommend --algo item-knn --user 42 --n 10
+recsys evaluate  --algo svd
+```
 
-### demographic_based_mean_rating.py
-This file contains a demographic-based recommender that uses the age and gender of users to recommend items. Given a user's ID, the function returns the top N recommended items for that user based on the average rating of those items by users of the same age and gender.
+## Algorithms
 
-### context_aware_mean_rating.py
-This file contains a context-aware recommender that uses the context in which the recommendations will be used to recommend items. Given a context, the function returns the top N recommended items for that context based on the average rating of those items in that context.
+| Module                              | Class                | Notes                                                |
+|-------------------------------------|----------------------|------------------------------------------------------|
+| `recommender_systems.baselines`     | `MostPopular`        | Rank by interaction count                            |
+|                                     | `MeanRating`         | Rank by mean rating with a min-ratings threshold     |
+| `recommender_systems.neighborhood`  | `UserKNN`, `ItemKNN` | Cosine-similarity neighborhood CF                    |
+| `recommender_systems.svd`           | `SVD`                | Truncated SVD on the user-item matrix                |
+| `recommender_systems.content`       | `ContentBased`       | Item-feature similarity (TF-IDF, tags, embeddings)   |
 
-### hybrid_context_user.py
-This file contains a hybrid recommender that combines both context-aware and user-based collaborative filtering. Given a user's ID and a context, the function returns the top N recommended items for that user and context by combining the recommendations from both the context-aware and user-based collaborative filtering approaches.
+Evaluation metrics — `precision@k`, `recall@k`, `MAP@k`, `NDCG@k`, plus the
+beyond-accuracy set (intra-list diversity, novelty, catalog coverage,
+serendipity) — live in `recommender_systems.metrics`.
 
-### content_based_binary_filter.py
-This file contains a content-based recommender that uses a binary filter to recommend items. Given a list of keywords, the function returns the top N recommended items that contain those keywords in their description.
+## Development
 
-### content_based_cosine_similarity.py
-This file contains a content-based recommender that uses cosine similarity to recommend items. Given a list of keywords, the function returns the top N recommended items that are most similar to the keywords based on the cosine similarity of their descriptions.
+```bash
+pip install -e ".[dev]"
 
-### content_based_word_counts.py
-This file contains a content-based recommender that uses word counts to recommend items. Given a list of keywords, the function returns the top N recommended items that contain the most occurrences of those keywords in their description.
+ruff check src tests
+ruff format --check src tests
+mypy
+pytest
+```
 
-### content_based_word_embeddings.py
-This file contains a content-based recommender that uses word embeddings to recommend items. Given a list of keywords, the function returns the top N recommended items that are most similar to the keywords based on the cosine similarity of their word embeddings.
-
-## demographic_based_filtering.py
-This file contains a demographic-based recommender that uses the age and gender of users to recommend items. Given a user's ID, the function returns the top N recommended items for that user based on the average rating of those items by users of the same age and gender.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the quality bar and
+[`ROADMAP.md`](ROADMAP.md) for the current phase plan.

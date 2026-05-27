@@ -35,6 +35,10 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 embeddings = ["gensim>=4.3"]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+]
 dev = [
     "mypy>=1.8",
     "pytest>=7.4",

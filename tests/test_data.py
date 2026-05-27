@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from recommender_systems import build_user_item_matrix, train_test_split
+from recommender_systems import build_user_item_matrix, split_ratings
 
 
 @pytest.fixture
@@ -40,14 +40,14 @@ def test_matrix_missing_column_raises():
 
 
 def test_split_sizes_and_partition(ratings):
-    train, test = train_test_split(ratings, test_size=0.5, random_state=0)
+    train, test = split_ratings(ratings, test_size=0.5, random_state=0)
     assert len(test) == 2
     assert len(train) + len(test) == len(ratings)
 
 
 def test_split_is_reproducible(ratings):
-    a_train, a_test = train_test_split(ratings, test_size=0.5, random_state=42)
-    b_train, b_test = train_test_split(ratings, test_size=0.5, random_state=42)
+    a_train, a_test = split_ratings(ratings, test_size=0.5, random_state=42)
+    b_train, b_test = split_ratings(ratings, test_size=0.5, random_state=42)
     pd.testing.assert_frame_equal(a_train, b_train)
     pd.testing.assert_frame_equal(a_test, b_test)
 
@@ -55,4 +55,4 @@ def test_split_is_reproducible(ratings):
 def test_split_invalid_size_raises(ratings):
     for bad in (0.0, 1.0, -0.1, 1.5):
         with pytest.raises(ValueError, match="test_size"):
-            train_test_split(ratings, test_size=bad)
+            split_ratings(ratings, test_size=bad)

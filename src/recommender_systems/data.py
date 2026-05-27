@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-__all__ = ["build_user_item_matrix", "train_test_split"]
+__all__ = ["build_user_item_matrix", "split_ratings"]
 
 
 def build_user_item_matrix(
@@ -44,7 +44,7 @@ def build_user_item_matrix(
     return matrix
 
 
-def train_test_split(
+def split_ratings(
     ratings: pd.DataFrame,
     *,
     test_size: float = 0.2,

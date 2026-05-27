@@ -61,3 +61,15 @@ def test_two_tower_terminates_when_a_user_has_rated_every_item():
     model = TwoTowerCF(n_factors=4, epochs=3, random_state=0).fit(ratings)
     assert model.recommend(0, n=5) == []
     assert model.recommend(1, n=2)
+
+
+def test_two_tower_round_trips_through_persistence(tmp_path):
+    from recommender_systems.persistence import load, save
+
+    model = TwoTowerCF(n_factors=4, epochs=3, random_state=0).fit(_two_cluster_implicit_feedback())
+    path = tmp_path / "model.pkl"
+
+    save(model, path)
+    loaded = load(path)
+
+    assert loaded.recommend(0, n=10) == model.recommend(0, n=10)

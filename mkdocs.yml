@@ -50,6 +50,8 @@ nav:
   - Overview: index.md
   - Quickstart: quickstart.md
   - Beyond accuracy: beyond_accuracy.md
+  - Choosing an algorithm: choosing_an_algorithm.md
+  - Book recommender demo: book_recommender_demo.md
   - API Reference: api.md
 
 markdown_extensions:

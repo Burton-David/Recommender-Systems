@@ -6,6 +6,12 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+### Documented
+
+- `docs/evolution/04-neural-stays-pytorch.md` — ADR explaining why
+  `TwoTowerCF` deliberately stays on PyTorch and is not getting the
+  same Rust/sparse treatment Phases 2 and 3 applied to BPR and k-NN/SVD.
+
 ### Added
 
 - Rust+PyO3 kernel (`crates/recsys-kernels/`) for BPR's inner SGD loop.

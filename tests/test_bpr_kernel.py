@@ -20,10 +20,19 @@ from recommender_systems.metrics import precision_at_k, recall_at_k
 
 
 def test_bpr_train_kernel_is_callable() -> None:
-    """Smoke test the PyO3 binding signature on tiny inputs."""
+    """Smoke test the PyO3 binding signature on tiny inputs.
+
+    Initializes factors with small Gaussian noise the way ``BPR.fit`` does —
+    zero-init would leave the gradient at zero (it multiplies ``u_vec`` and
+    the item-difference) and produce no movement, which is correct but
+    useless for verifying the kernel ran.
+    """
     n_users, n_items, n_factors = 4, 5, 3
-    user_factors = np.zeros((n_users, n_factors), dtype=np.float64)
-    item_factors = np.zeros((n_items, n_factors), dtype=np.float64)
+    rng = np.random.default_rng(0)
+    user_factors = rng.normal(0.0, 0.01, size=(n_users, n_factors))
+    item_factors = rng.normal(0.0, 0.01, size=(n_items, n_factors))
+    before_users = user_factors.copy()
+    before_items = item_factors.copy()
     positives = np.array([[0, 0], [0, 1], [1, 2], [2, 3], [3, 4]], dtype=np.int64)
     observed = np.zeros((n_users, n_items), dtype=bool)
     for u, i in positives:
@@ -35,14 +44,13 @@ def test_bpr_train_kernel_is_callable() -> None:
         positives,
         observed.reshape(-1),
         n_items,
-        epochs=1,
+        epochs=2,
         learning_rate=0.05,
         reg=0.01,
         seed=0,
     )
-    # Factors should have moved from zero.
-    assert np.any(user_factors != 0.0)
-    assert np.any(item_factors != 0.0)
+    assert not np.array_equal(user_factors, before_users)
+    assert not np.array_equal(item_factors, before_items)
 
 
 def test_kernel_backed_bpr_matches_python_on_quality() -> None:

@@ -17,6 +17,7 @@ from collections.abc import Callable, Sequence
 
 from recommender_systems import Recommender, split_ratings
 from recommender_systems.baselines import MeanRating, MostPopular
+from recommender_systems.bpr import BPR
 from recommender_systems.datasets import load_movielens_100k
 from recommender_systems.metrics import (
     mean_average_precision,
@@ -33,6 +34,7 @@ ALGORITHMS: dict[str, Callable[..., Recommender]] = {
     "item-knn": ItemKNN,
     "user-knn": UserKNN,
     "svd": SVD,
+    "bpr": BPR,
 }
 
 
@@ -71,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _instantiate(name: str, seed: int) -> Recommender:
     factory = ALGORITHMS[name]
-    if name == "svd":
+    if name in {"bpr", "svd"}:
         return factory(random_state=seed)
     return factory()
 

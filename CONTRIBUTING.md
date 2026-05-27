@@ -23,6 +23,24 @@ The package uses a `src/` layout; the importable package is `recommender_systems
 - Prefer small, pure functions and explicit arguments over hidden state. No code should
   run at import time.
 
+## Recommenders that need side information
+
+Some algorithms — content-based, demographic, context-aware — need data beyond the
+ratings frame: item features, user attributes, or context. Keep `fit(ratings)` uniform
+across the library so algorithms remain interchangeable, and **pass side information
+through the constructor** instead of adding a parameter to `fit`:
+
+```python
+recommender = ContentBased(item_features=features)
+recommender.fit(ratings)
+```
+
+This puts the algorithm's static configuration — the *kind* of side information it
+consumes — in its identity, while the per-training-run signal stays on `fit`. Evaluation
+harnesses and benchmark scripts can then iterate over a list of fully-constructed
+recommenders without branching on signature differences. See
+`recommender_systems.content.ContentBased` for the reference implementation.
+
 ## Tests
 
 - Every algorithm and bug fix ships with tests under `tests/`.

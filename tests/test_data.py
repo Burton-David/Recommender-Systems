@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+from scipy import sparse
 
 from recommender_systems import (
+    build_sparse_user_item_matrix,
     build_user_item_matrix,
     densest_subset,
     holdout_per_user,
@@ -99,3 +101,24 @@ def test_holdout_per_user_is_reproducible():
     a = holdout_per_user(ratings, random_state=7)
     b = holdout_per_user(ratings, random_state=7)
     pd.testing.assert_frame_equal(a[1], b[1])
+
+
+def test_build_sparse_user_item_matrix_shape_values_and_maps():
+    ratings = pd.DataFrame(
+        {"user_id": [1, 1, 2], "item_id": ["a", "b", "a"], "rating": [5.0, 3.0, 4.0]}
+    )
+    matrix, users, items = build_sparse_user_item_matrix(ratings)
+
+    assert sparse.issparse(matrix)
+    assert matrix.shape == (len(users), len(items)) == (2, 2)
+    assert list(users) == [1, 2]
+    assert list(items) == ["a", "b"]
+    assert matrix[users.get_loc(1), items.get_loc("b")] == 3.0
+    assert matrix[users.get_loc(2), items.get_loc("a")] == 4.0
+    assert matrix[users.get_loc(2), items.get_loc("b")] == 0.0
+
+
+def test_build_sparse_averages_duplicate_pairs():
+    ratings = pd.DataFrame({"user_id": [1, 1], "item_id": ["a", "a"], "rating": [2.0, 4.0]})
+    matrix, _users, _items = build_sparse_user_item_matrix(ratings)
+    assert matrix[0, 0] == 3.0

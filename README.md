@@ -87,6 +87,10 @@ recsys evaluate  --algo svd
 | `recommender_systems.neighborhood`  | `UserKNN`, `ItemKNN` | Cosine-similarity neighborhood CF                    |
 | `recommender_systems.svd`           | `SVD`                | Truncated SVD on the user-item matrix                |
 | `recommender_systems.content`       | `ContentBased`       | Item-feature similarity (TF-IDF, tags, embeddings)   |
+| `recommender_systems.bpr`           | `BPR`                | Bayesian Personalized Ranking for implicit feedback  |
+
+`recommender_systems.features.text_features` builds TF-IDF / count / binary
+item-by-term matrices from per-item text, ready to pass to `ContentBased`.
 
 Evaluation metrics — `precision@k`, `recall@k`, `MAP@k`, `NDCG@k`, plus the
 beyond-accuracy set (intra-list diversity, novelty, catalog coverage,

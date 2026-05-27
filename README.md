@@ -10,6 +10,24 @@
 
 **This library contains a variety of different recommender systems implemented in Python.**
 
+## Benchmarks
+
+Top-10 evaluation on MovieLens 100k (80/20 seeded split). Reproduce with
+`pip install -e ".[dev,benchmarks]" && python scripts/benchmark.py`.
+
+![MovieLens 100k benchmark](benchmarks/results.png)
+
+|             | precision@10 | recall@10 |  MAP@10 | NDCG@10 | coverage@10 |
+|:------------|-------------:|----------:|--------:|--------:|------------:|
+| MostPopular |       0.1863 |    0.1191 |  0.1104 |  0.2141 |      0.0315 |
+| MeanRating  |       0.0490 |    0.0194 |  0.0140 |  0.0428 |      0.0161 |
+| ItemKNN     |       0.3188 |    0.2010 |  0.2486 |  0.3786 |      0.2866 |
+| UserKNN     |       0.3175 |    0.2123 |  0.2503 |  0.3881 |      0.2134 |
+| SVD         |       0.3016 |    0.2134 |  0.2283 |  0.3675 |      0.2717 |
+
+See [`benchmarks/results.md`](benchmarks/results.md) for the same table generated
+from a fresh run.
+
 1. user_based_cosine_similarity.py
 2. item_based_dot_product.py
 3. demographic_based_mean_rating.py

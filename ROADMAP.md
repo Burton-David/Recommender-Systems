@@ -18,7 +18,7 @@ built on top of it.
 - **Reproducible benchmarks** on MovieLens 100k and goodbooks-10k (committed tables +
   charts), a `recsys` CLI, and model persistence.
 
-## In progress — the book recommender showcase (epic #50)
+## In progress — the book recommender (epic #50)
 
 A book recommender that powers a real e-reader app: goodbooks-10k benchmark, tag-based
 content recommendation, two-tower neural CF, hybrid collaborative+content, explainable

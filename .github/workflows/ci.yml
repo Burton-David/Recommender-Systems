@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -30,5 +33,13 @@ jobs:
         run: ruff check src tests
       - name: Format check
         run: ruff format --check src tests
+      - name: Type-check
+        run: mypy
       - name: Test
-        run: pytest
+        run: pytest --cov=recommender_systems --cov-report=term-missing --cov-report=xml
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false

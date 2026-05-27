@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from recommender_systems import (
+    ALS,
     BPR,
     SVD,
     ContentBased,
@@ -38,6 +39,8 @@ def _content_features():
 def _build(cls):
     if cls is MeanRating:
         return cls(min_ratings=1)
+    if cls is ALS:
+        return cls(n_factors=2, epochs=2, random_state=0)
     if cls is SVD:
         return cls(n_factors=2, random_state=0)
     if cls is BPR:
@@ -58,6 +61,7 @@ def _build(cls):
         UserKNN,
         SVD,
         BPR,
+        ALS,
         ContentBased,
         HybridRecommender,
     ],

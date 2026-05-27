@@ -8,6 +8,14 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Documented
 
+- `docs/evolution/05-go-serving-postmortem.md` — postmortem of the Go
+  serving experiment. New `serving/` directory holds the matching Go
+  stdlib HTTP service, FastAPI baseline, model exporter, and an
+  httpx-async load generator. Measured result: for this small-model
+  serving workload the Go service beat FastAPI + numpy on throughput,
+  latency, and memory. The per-request matmul is too small for BLAS to
+  dominate, so the request path decides it and Go's is leaner. The
+  library stays pure Python; `serving/` is a documented experiment.
 - `docs/evolution/04-neural-stays-pytorch.md` — ADR explaining why
   `TwoTowerCF` deliberately stays on PyTorch and is not getting the
   same Rust/sparse treatment Phases 2 and 3 applied to BPR and k-NN/SVD.

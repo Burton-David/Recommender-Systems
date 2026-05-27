@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-
 import numpy as np
 import pandas as pd
 
-from recommender_systems.base import _MatrixBackedRecommender
+from recommender_systems.base import _PredictedScoreRecommender
 from recommender_systems.data import build_user_item_matrix
 
 __all__ = ["ALS"]
 
 
-class ALS(_MatrixBackedRecommender):
+class ALS(_PredictedScoreRecommender):
     """Implicit-feedback matrix factorization via alternating least squares.
 
     Follows Hu, Koren & Volinsky (2008): binary preferences ``p_ui = 1 if r_ui > 0``
@@ -54,7 +52,6 @@ class ALS(_MatrixBackedRecommender):
         self.regularization = regularization
         self.alpha = alpha
         self.random_state = random_state
-        self._predicted: np.ndarray = np.empty((0, 0))
 
     def fit(self, ratings: pd.DataFrame) -> ALS:
         self._matrix = build_user_item_matrix(ratings, fill_value=0.0)
@@ -92,6 +89,3 @@ class ALS(_MatrixBackedRecommender):
             b = other.T @ (confidence[row] * preferences[row])
             target[row] = np.linalg.solve(a, b)
         return target
-
-    def _user_scores(self, user_id: Hashable) -> np.ndarray:
-        return np.asarray(self._predicted[self._matrix.index.get_loc(user_id)])

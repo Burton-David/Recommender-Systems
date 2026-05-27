@@ -1,6 +1,6 @@
 # Book recommender demo (goodbooks-10k)
 
-End-to-end walkthrough of the book-recommender showcase: load goodbooks-10k,
+End-to-end walkthrough of the book recommender: load goodbooks-10k,
 shrink it to a tractable subset, build a hybrid of collaborative filtering and
 tag-based content, fit, recommend, and explain.
 

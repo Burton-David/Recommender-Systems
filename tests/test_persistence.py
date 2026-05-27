@@ -78,3 +78,19 @@ def test_load_rejects_non_recommender(tmp_path):
 
     with pytest.raises(TypeError, match="Recommender"):
         load(path)
+
+
+def test_load_rejects_malformed_pickle(tmp_path):
+    path = tmp_path / "garbage.pkl"
+    path.write_bytes(b"this is not a pickle stream")
+
+    with pytest.raises(ValueError, match="not a valid recommender file"):
+        load(path)
+
+
+def test_load_rejects_empty_file(tmp_path):
+    path = tmp_path / "empty.pkl"
+    path.write_bytes(b"")
+
+    with pytest.raises(ValueError, match="not a valid recommender file"):
+        load(path)

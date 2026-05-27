@@ -1,168 +1,135 @@
-# Phase 5 — Go serving layer: postmortem
+# Phase 5 — a Go serving layer, and why it beat the Python one
 
-**Status:** harness shipped; measurement pending.
-**Tag:** `v0.5.0` (planned, gated on real numbers).
-**Code change:** new `serving/` directory with a FastAPI Python service,
-a stdlib-only Go service, an httpx-async load generator, and methodology
-docs. **The library's runtime code does not depend on any of it.**
+**Status:** shipped as an experiment. The library's runtime does not depend on it.
+**Tag:** `v0.5.0` (planned).
+**Code:** a new `serving/` directory holding a FastAPI service, a stdlib-only Go
+service, a model exporter, and a load generator. Nothing under `serving/` is
+imported by `recommender_systems`.
 
-## What this phase is
+## The bet
 
-Phases 2 and 3 took a measurement, found a hot path, and rewrote it.
-This phase took a *guess* — "a Go serving layer will lower latency and
-memory enough to be worth the complexity" — and the goal is to answer
-whether the guess holds up against a fair benchmark.
+Phases 2 and 3 were the same move twice: measure, find the hot path, rewrite it
+in something faster. This phase started as a bet that the move had one more place
+to go, that putting a trained model behind a small Go HTTP service would serve
+recommendations with lower latency and a smaller memory footprint than FastAPI on
+numpy.
 
-The verdict has to follow the numbers, not lead them. The harness is in
-tree; [Results](#results) is empty until both services have been measured
-on a machine that has both Go and the Python environment. A
-first-principles forecast lives in
-[What the numbers should show, and why](#what-the-numbers-should-show-and-why)
-so a reader can compare prediction to outcome when the table fills in.
+I expected to lose the latency half of that bet. The per-request work is a single
+matrix-vector multiply against the item factors, and numpy hands that to BLAS,
+which has had two decades of tuning a hand-written Go loop has no business
+beating. The most I expected was a memory win: a static binary holding float32
+slices should sit well under a Python process that also carries the interpreter,
+FastAPI, and numpy. The plan was to build both, measure, write down that Go bought
+some RAM and cost some throughput, and move on.
 
-## Methodology
+That is not how it went.
 
-Both services back the same model — a 50-factor SVD trained on
-MovieLens 100k, exported via `serving/python/export_model.py` to a
-plain JSON file. Both expose `GET /recommend?user_id=<id>&n=<count>`
-returning `{"items":[...]}`. The Python service is FastAPI + uvicorn
-on top of numpy (which dispatches matmul to the platform BLAS). The Go
-service is `net/http` + a hand-written dot-product loop in stdlib,
-deliberately avoiding gonum to keep the comparison about runtime
-choice rather than library choice.
+## What actually happened
 
-Load generator is `serving/bench/run_bench.py` — async httpx, fixed
-duration, fixed concurrency. Reports RPS, mean / p50 / p95 / p99 client
-latency. Pass `--server-pid <pid>` and it also samples the server
-process's resident set size at the end via `ps`; the load generator's
-own memory is uninteresting and intentionally not reported.
-
-The top-N selection on both sides uses partial selection
-(`np.argpartition` in Python, a min-heap in Go) so the comparison stays
-"runtime + numerical library" and doesn't accidentally penalize Go for
-doing a full sort.
-
-```
-python -m serving.python.export_model --out serving/model.json
-uvicorn serving.python.server:app --port 8000 --workers 1 &  PY_PID=$!
-(cd serving/go && go run . --model ../model.json --port 8001) &  GO_PID=$!
-python serving/bench/run_bench.py --url http://localhost:8000/recommend \
-    --duration 30 --concurrency 32 --server-pid $PY_PID
-python serving/bench/run_bench.py --url http://localhost:8001/recommend \
-    --duration 30 --concurrency 32 --server-pid $GO_PID
-```
-
-The recipe above is the source of truth.
-
-## Results
+Both services back the same model, a 50-factor SVD trained on MovieLens 100k,
+exported to JSON so the only thing that differs between them is the runtime. Both
+serve `GET /recommend?user_id=&n=`. Thirty-second runs, concurrency 32, one worker
+per service, on an Apple Silicon laptop (Go 1.26, single uvicorn worker).
 
 | | FastAPI + numpy | Go + stdlib |
 |---|---|---|
-| Throughput (req/s) | _pending_ | _pending_ |
-| Latency p50 (ms) | _pending_ | _pending_ |
-| Latency p95 (ms) | _pending_ | _pending_ |
-| Latency p99 (ms) | _pending_ | _pending_ |
-| Server RSS, steady (MiB) | _pending_ | _pending_ |
+| Throughput | 585 req/s | 782 req/s |
+| Latency p50 | 30 ms | 28 ms |
+| Latency p95 | 175 ms | 114 ms |
+| Latency p99 | 299 ms | 195 ms |
+| Server RSS, steady | 67 MiB | 21 MiB |
 
-Filled in when a machine with both Go and the Python serving deps runs
-the recipe. The table will be amended with whatever the run actually
-shows; the conclusion below follows the numbers, not the reverse.
+Go won all of it: a third more throughput, a third off the p99, a third of the
+memory. The one thing I was sure of going in, that BLAS would carry Python on the
+CPU work, was simply wrong for this workload.
 
-## What the numbers should show, and why
+## Why the BLAS argument didn't hold
 
-A first-principles forecast, to be compared against the actual run:
+The assumption was right about BLAS and wrong about how much of a request BLAS
+accounts for. The multiply is 1,682 items by 50 factors, roughly eighty thousand
+multiply-adds. On a modern core that takes a few microseconds whether BLAS does it
+or a plain `for` loop does, and it is nowhere near the cost of a request.
 
-1. **Python should win on CPU per request.** The hot path is one
-   `(n_items, n_factors) @ (n_factors,)` matrix-vector multiply —
-   for goodbooks-class catalogs that's a few million FLOPs. Numpy
-   hands it to Accelerate / MKL / OpenBLAS, hand-tuned for two
-   decades. The Go service runs a stdlib nested loop. Stdlib-only is
-   on purpose so the comparison is "runtime choice" rather than
-   "library choice"; the prediction is that the runtime choice
-   doesn't help when the library choice is doing all the work on the
-   other side. Expected: Python higher RPS, lower latency.
-2. **Go should win on memory by a small constant.** Empty FastAPI +
-   uvicorn + numpy + a SVD model is ~120–180 MiB resident; a Go HTTP
-   server holding the same factors as float32 slices is ~60–100 MiB.
-   Expected: Go ~50–100 MiB ahead on steady-state RSS.
-3. **GC tail latency** shouldn't differentiate at concurrency 32 —
-   Go's pauses are sub-ms and Python releases the GIL on numpy
-   blocking calls. Both runtimes should be quiet under this load
-   profile.
+What a request actually costs is the envelope around the multiply: parsing the
+query, the ASGI machinery, allocating the score vector, the top-N selection, JSON
+serialization, and Python's per-call overhead layered over all of it. Go does that
+same envelope in compiled code with far less allocation. So the benchmark was never
+really "BLAS versus a hand loop." It was "the Python request path versus the Go
+request path," and at this payload size the request path is the whole game.
 
-If the actual numbers contradict the forecast, the forecast is wrong
-and the postmortem gets updated to walk through why.
+To rule out the boring explanation, that Go just used more cores while a
+single-process Python sat on one, I pinned Go to one core with `GOMAXPROCS=1` and
+ran it again: 687 req/s at 20 MiB, still ahead of Python's 585 at 67. Go is faster
+here per core, not only because it has more of them.
 
-## What we honestly considered (and how Go could win)
+## The honest caveat
 
-Go's strengths are real; they just don't engage here.
+A single uvicorn worker is the weakest way to run the Python service. The GIL keeps
+one process on one core for CPU work, so a lone worker leaves most of the machine
+idle, and nobody deploys it that way. The real comparison gives Python
+`gunicorn -w <cores>`, and with enough workers its aggregate throughput will pass a
+single Go process. It pays for that in memory, though: every worker carries its own
+interpreter, its own numpy, and its own copy of the model, so N workers is roughly N
+times the 67 MiB. Per-request latency doesn't improve either, since each request
+still runs on one worker. Grant Python the deployment it would actually use and it
+can win on total throughput, but Go keeps the memory result outright and stays ahead
+on latency.
 
-- **GC tail latency.** Go's GC pauses are sub-millisecond and not the
-  story at this concurrency level. Python's GIL releases on numpy
-  blocking calls, so the equivalent contention doesn't show up either.
-  Both runtimes are quiet under our load profile.
-- **Native concurrency.** Goroutines beat uvicorn workers for
-  bursty connection patterns — but a recommendation service's
-  bottleneck is the CPU work per request, not connection juggling.
-  Same `requests-served-per-core` either way.
-- **Cold-start.** Go binary boots in milliseconds vs uvicorn's
-  ~1-second import time. Real if you're scaling-to-zero on Lambda /
-  Cloud Run. Not relevant for a long-running model server.
-- **Single-binary deploy.** True, useful for some teams' deploy
-  stories. Doesn't change the latency or throughput numbers above.
+This also only holds while the per-request work stays small. A bigger model, a
+larger catalog, or batched scoring would push real FLOPs into the multiply, BLAS
+would start to earn its keep, and the picture would drift back toward numpy. The
+result is specific to serving a small model with one multiply per request, which
+happens to be the shape a lot of recommendation endpoints actually have.
 
-If we cared about any of these — bursty traffic, sub-ms p99 hard
-requirement, scale-to-zero, restricted container environments — the
-trade calculation would be different. We don't, so it isn't.
+## What this means for the library
 
-## What this would have been on a different workload
+Nothing in the package changes. `recommender_systems` is a Python library and stays
+one. `pip install` pulls in no Go, CI doesn't build it, and the README claims no
+serving runtime. `serving/` stays in the tree as a documented experiment and a
+worked example of comparing two runtimes without quietly rigging the result.
 
-The honest counterfactual: if the per-request work were dominated by
-*I/O* (database lookups, feature-store calls, side calls to a
-recommendation gateway), Go would likely win — its concurrency model
-makes orchestrating many slow upstreams cheaper than asyncio does.
-Recommendation serving in industry usually *does* look like that. Our
-library serves models that are already in memory and whose hot path is
-pure CPU on small matrices; that's the regime where Python's compiled
-numerics keep up.
+What changed is the lesson. Phase 1.1's rule was measure before you cut. This is the
+same rule aimed the other way: measure before you dismiss. I was a benchmark away
+from shipping a confident writeup about Go not being worth it, and the numbers said
+I had the answer backwards. The surprising version is more useful than the tidy one
+I planned to write.
 
-This isn't "Go is bad." It's "Go's wins don't engage on this workload."
+## Methodology
 
-## What got built and shipped vs deleted
+Same JSON model for both services, served behind the identical endpoint. The Python
+side is FastAPI and uvicorn over numpy; the Go side is `net/http` with a hand-written
+dot product in stdlib, no gonum, so the comparison is about the runtime rather than
+which BLAS each one wraps. Top-N selection is partial on both sides (`np.argpartition`
+in Python, a min-heap in Go) so neither pays for a full sort the other skips. The
+load generator (`serving/bench/run_bench.py`) drives async httpx at a fixed duration
+and concurrency, reports RPS and client-side p50/p95/p99, and with `--server-pid`
+samples the server process RSS via `ps` at the end.
 
-Kept:
+```
+python -m serving.python.export_model --out serving/model.json
+uvicorn serving.python.server:app --port 8000 &  PY_PID=$!
+(cd serving/go && go build -o /tmp/recsvc . && /tmp/recsvc --model ../model.json --port 8001) &  GO_PID=$!
+python serving/bench/run_bench.py --url http://localhost:8000/recommend --duration 30 --concurrency 32 --server-pid $PY_PID
+python serving/bench/run_bench.py --url http://localhost:8001/recommend --duration 30 --concurrency 32 --server-pid $GO_PID
+```
 
-- `serving/` — the two services and the benchmark. Useful as a worked
-  example of how to compare two runtimes honestly, and as the
-  starting point for anyone who *does* face a workload Go would win on.
-- This postmortem.
-
-Not added:
-
-- A Go service in the library's runtime dependency graph.
-- CI for the Go service.
-- A "production" deploy recipe.
-- Any claim in the README that the library has a Go serving layer.
-
-The library is a Python package. The Go code is in `serving/` as a
-documented experiment, not as part of the shipped surface area.
+Numbers above are from this recipe on Apple Silicon. They move with hardware; the
+gaps are what carry across machines, and they're large enough to survive a fair bit
+of variance.
 
 ## Options considered
 
-| Option | Why we still did the experiment / why we don't ship it as runtime |
+| Option | Verdict |
 |---|---|
-| Skip Phase 5 entirely | The framing of the rest of the arc is *measured discipline*. Refusing a thing without checking is the failure mode this whole repo argues against. Building the experiment was cheap; the postmortem is the payoff. |
-| Ship the Go service as the recommended deploy path | Conclusion above: numbers don't justify the complexity for this workload. |
-| Use gonum instead of stdlib loops in the Go service | Would close the BLAS gap. But "Go service that wraps the same BLAS library Python wraps" is a much weaker thesis — at that point you're choosing runtimes on ergonomics, not on speed. |
-| Use ONNX runtime in Go | Sensible for a real production rec system, but pulls in a heavy dep and changes the experiment from "Go vs Python" to "ONNX runtime in Go vs Python+numpy." Out of scope. |
-| Skip the postmortem, quietly drop the experiment | Tempting, but writing down the negative result is the most portable artifact of the whole phase. The next person tempted to add a Go serving layer gets a measurement, not a vibes-based opinion. |
+| Ship the Go service as the library's deploy path | The numbers favor Go for this workload, but the library is a Python package. Carrying a second runtime, its build, and its CI for a serving layer most users won't deploy isn't a trade this project makes. The experiment and the numbers are the deliverable. |
+| Use gonum instead of stdlib loops | Would wrap the same BLAS Python wraps, turning the comparison into ergonomics rather than runtime. It also turned out unnecessary: the stdlib loop already won, because the multiply was never the bottleneck. |
+| ONNX runtime in Go | Reasonable for a production system, but it pulls in a heavy dependency and changes the question from "Go vs Python" to "ONNX-in-Go vs Python+numpy." Out of scope. |
+| Don't write it up | The result is the opposite of what I expected, which makes it the most worth writing down. The next person who assumes BLAS settles this gets a measurement instead of my old guess. |
 
-## What's not in scope
+## Not in scope
 
-- The library's runtime dependency on Go. There is none.
-- A production-grade serving stack (TLS, authentication, rate
-  limiting, multi-model routing, feature store integration).
-- gRPC. The HTTP/JSON comparison is sufficient for the question
-  being asked.
-- GPU serving. Out of band — different workload class, different
-  comparison.
+- A runtime dependency on Go. There is none.
+- A production serving stack: TLS, auth, rate limiting, multi-model routing, a
+  feature store.
+- gRPC. HTTP/JSON answers the question being asked.
+- GPU serving. Different workload class, different comparison.

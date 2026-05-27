@@ -75,9 +75,10 @@ RSS at the end.
 ## Results
 
 See [`docs/evolution/05-go-serving-postmortem.md`](../docs/evolution/05-go-serving-postmortem.md)
-— it's the deliverable, not an afterthought. Short version: for the
-single-machine, BLAS-dominated workload this library actually has, Go's
-typical wins (lower GC overhead, native concurrency) don't apply, and
-Python's numpy beats hand-written Go matrix math because it lands on
-BLAS. Go has a small steady-state memory edge that doesn't matter at
-the scales this library targets.
+— it's the deliverable, not an afterthought. Short version: I expected
+numpy's BLAS to carry Python and was wrong. The per-request multiply is
+tiny, so the request path decides it, not the matrix math, and Go's
+request path is leaner. The Go service beat FastAPI + numpy on
+throughput, latency, and memory, and still won pinned to a single core.
+Multi-worker Python can take back aggregate throughput, at several times
+the memory.

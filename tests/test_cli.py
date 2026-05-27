@@ -98,3 +98,13 @@ def test_als_is_registered_and_seeded():
     model = cli._instantiate("als", seed=7)
     assert isinstance(model, ALS)
     assert model.random_state == 7
+
+
+def test_version_flag_prints_package_version(capsys):
+    import recommender_systems
+
+    with pytest.raises(SystemExit):
+        cli.main(["--version"])
+    out = capsys.readouterr().out
+    assert recommender_systems.__version__ in out
+    assert "recsys" in out

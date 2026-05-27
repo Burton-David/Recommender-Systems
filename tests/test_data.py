@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from recommender_systems import build_user_item_matrix, split_ratings
+from recommender_systems import build_user_item_matrix, densest_subset, split_ratings
 
 
 @pytest.fixture
@@ -56,3 +56,17 @@ def test_split_invalid_size_raises(ratings):
     for bad in (0.0, 1.0, -0.1, 1.5):
         with pytest.raises(ValueError, match="test_size"):
             split_ratings(ratings, test_size=bad)
+
+
+def test_densest_subset_keeps_top_users_and_items():
+    rows = []
+    # users 1 and 2 are active; user 3 rates once. items a, b are popular; c is rare.
+    for _ in range(3):
+        rows += [(1, "a"), (2, "b")]
+    rows += [(1, "b"), (2, "a"), (3, "c")]
+    ratings = pd.DataFrame(rows, columns=["user_id", "item_id"]).assign(rating=1)
+
+    subset = densest_subset(ratings, n_users=2, n_items=2)
+
+    assert set(subset["user_id"]) == {1, 2}
+    assert set(subset["item_id"]) == {"a", "b"}

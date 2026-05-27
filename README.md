@@ -42,6 +42,15 @@ Reproduce with `python -m scripts.benchmark_goodbooks`.
 | ItemKNN     |       0.3355 |    0.1534 |  0.2425 |  0.3841 |      0.3589 |
 | UserKNN     |       0.2370 |    0.1085 |  0.1539 |  0.2729 |      0.1423 |
 | SVD         |       0.2756 |    0.1241 |  0.1858 |  0.3173 |      0.0759 |
+| HybridBook  |       0.3206 |    0.1472 |  0.2109 |  0.3507 |      0.3545 |
+
+`HybridBook` is `ItemKNN + tag-based ContentBased` fused via `HybridRecommender`
+(RRF) with default weights `(3.0, 1.0)` — collaborative-leaning, because the
+tag-only content signal (capped at 200 TF-IDF features) is weaker than CF on
+this dataset and equal weighting dilutes accuracy. The hybrid lands in the top
+tier alongside `ItemKNN` (within ~5% on precision/coverage, ~10% on
+MAP/NDCG); the content half pulls its weight on items both signals agree on
+and provides a fallback path for cold-start items the CF half has never seen.
 
 See [`benchmarks/goodbooks_results.md`](benchmarks/goodbooks_results.md) for the
 freshly-regenerated table.

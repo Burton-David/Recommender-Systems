@@ -1,7 +1,7 @@
 # goodbooks-10k — top-10 evaluation
 
 Reproduce with `python -m scripts.benchmark_goodbooks` (seed = 20260527, 80/20 split).
-Subsampled to 2500 users (~281k interactions) so the dense user-user similarity needed by UserKNN fits in memory.
+Subsampled to 2500 users (~281k interactions) so the dense user-user similarity needed by UserKNN fits in memory. HybridBook fuses ItemKNN with a tag-based ContentBased via HybridRecommender (RRF).
 
 
 |             |   precision@10 |   recall@10 |   MAP@10 |   NDCG@10 |   coverage@10 |
@@ -11,3 +11,4 @@ Subsampled to 2500 users (~281k interactions) so the dense user-user similarity 
 | ItemKNN     |         0.3355 |      0.1534 |   0.2425 |    0.3841 |        0.3589 |
 | UserKNN     |         0.2370 |      0.1085 |   0.1539 |    0.2729 |        0.1423 |
 | SVD         |         0.2756 |      0.1241 |   0.1858 |    0.3173 |        0.0759 |
+| HybridBook  |         0.3206 |      0.1472 |   0.2109 |    0.3507 |        0.3545 |

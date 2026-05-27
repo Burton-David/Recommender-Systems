@@ -41,10 +41,13 @@ ALGORITHMS: dict[str, Callable[..., Recommender]] = {
 
 
 def build_parser() -> argparse.ArgumentParser:
+    from recommender_systems import __version__
+
     parser = argparse.ArgumentParser(
         prog="recsys",
         description="Train, recommend, and evaluate with recommender-systems.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--seed",
         type=int,

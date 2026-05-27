@@ -8,13 +8,13 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-from recommender_systems.base import _MatrixBackedRecommender
+from recommender_systems.base import _PredictedScoreRecommender
 from recommender_systems.data import build_user_item_matrix
 
 __all__ = ["ContentBased"]
 
 
-class ContentBased(_MatrixBackedRecommender):
+class ContentBased(_PredictedScoreRecommender):
     """Recommend items whose features resemble those a user has liked.
 
     The user's profile is a ratings-weighted mean of the features of the items they
@@ -36,7 +36,6 @@ class ContentBased(_MatrixBackedRecommender):
     def __init__(self, item_features: pd.DataFrame) -> None:
         super().__init__()
         self._item_features = item_features
-        self._predicted: np.ndarray = np.empty((0, 0))
         self._aligned_features: np.ndarray = np.empty((0, 0))
         self._profiles: np.ndarray = np.empty((0, 0))
         self._feature_names: list[str] = []
@@ -58,9 +57,6 @@ class ContentBased(_MatrixBackedRecommender):
         )
         self._predicted = np.asarray(cosine_similarity(self._profiles, self._aligned_features))
         return self
-
-    def _user_scores(self, user_id: Hashable) -> np.ndarray:
-        return np.asarray(self._predicted[self._matrix.index.get_loc(user_id)])
 
     def explain(self, user_id: Hashable, item_id: Hashable, top_features: int = 3) -> str:
         """Return the top features driving ``item_id``'s score for ``user_id``.

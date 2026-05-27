@@ -19,8 +19,19 @@ def load(path: str | Path) -> Recommender:
     """Load a recommender previously saved with :func:`save`.
 
     Only load files you trust: unpickling executes arbitrary code.
+
+    Raises
+    ------
+    ValueError
+        If ``path`` does not contain a valid pickle stream.
+    TypeError
+        If the loaded object is not a :class:`Recommender`.
     """
-    obj = pickle.loads(Path(path).read_bytes())
+    raw = Path(path).read_bytes()
+    try:
+        obj = pickle.loads(raw)
+    except (pickle.UnpicklingError, EOFError) as exc:
+        raise ValueError(f"{path} is not a valid recommender file") from exc
     if not isinstance(obj, Recommender):
         raise TypeError(f"{path} does not contain a Recommender")
     return obj

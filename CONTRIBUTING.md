@@ -8,14 +8,16 @@ Thanks for contributing. This guide keeps the codebase consistent and reviewable
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+pre-commit install
 ```
 
 The package uses a `src/` layout; the importable package is `recommender_systems`.
 
 ## Code style
 
-- Formatting and linting are handled by [Ruff](https://docs.astral.sh/ruff/). Run
-  `ruff format` and `ruff check` before committing; CI enforces both.
+- Formatting and linting are handled by [Ruff](https://docs.astral.sh/ruff/). The
+  `pre-commit install` step above wires `ruff` and `ruff format` to run on every
+  commit; CI enforces the same checks.
 - Line length is 100 characters. Target Python 3.10+.
 - Type-hint all public functions and methods.
 - Public functions and classes get NumPy-style docstrings (Parameters / Returns).

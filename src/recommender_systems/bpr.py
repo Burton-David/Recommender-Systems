@@ -65,7 +65,35 @@ class BPR(_MatrixBackedRecommender):
         # Restrict training to users that have at least one unobserved item —
         # without that guarantee the negative-resample loop below never terminates.
         has_negatives = observed.sum(axis=1) < n_items
-        positives = np.argwhere(observed & has_negatives[:, None])
+        positives = np.argwhere(observed & has_negatives[:, None]).astype(np.int64)
+
+        try:
+            from recommender_systems import _kernels  # type: ignore[attr-defined]
+        except ImportError:
+            self._fit_python(observed, positives, n_items, rng)
+        else:
+            _kernels.bpr_train(
+                self._user_factors,
+                self._item_factors,
+                positives,
+                observed.reshape(-1),
+                n_items,
+                self.epochs,
+                self.learning_rate,
+                self.reg,
+                int(self.random_state if self.random_state is not None else 0),
+            )
+        return self
+
+    def _fit_python(
+        self,
+        observed: np.ndarray,
+        positives: np.ndarray,
+        n_items: int,
+        rng: np.random.Generator,
+    ) -> None:
+        """Pure-Python training loop, kept as a fallback for environments where
+        the compiled ``_kernels`` extension isn't available."""
         for _ in range(self.epochs):
             order = rng.permutation(len(positives))
             negatives = rng.integers(0, n_items, size=len(positives))
@@ -74,8 +102,7 @@ class BPR(_MatrixBackedRecommender):
                 j = int(neg)
                 while observed[u, j]:
                     j = int(rng.integers(0, n_items))
-                self._step(u, int(i), j)
-        return self
+                self._step(int(u), int(i), j)
 
     def _step(self, u: int, i: int, j: int) -> None:
         u_vec = self._user_factors[u]

@@ -1,0 +1,20 @@
+[package]
+name = "recsys-kernels"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "_kernels"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py310"] }
+numpy = "0.22"
+ndarray = "0.16"
+rand = "0.8"
+rand_pcg = "0.3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

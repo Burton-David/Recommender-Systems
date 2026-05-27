@@ -22,5 +22,14 @@ htmlcov/
 # Docs build output
 site/
 
+# Rust build artifacts
+target/
+**/*.rs.bk
+
+# Compiled Python extensions produced by maturin
+src/recommender_systems/_kernels*.so
+src/recommender_systems/_kernels*.pyd
+src/recommender_systems/_kernels*.dylib
+
 # OS / editor
 .DS_Store

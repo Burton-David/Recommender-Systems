@@ -6,7 +6,24 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
-The pre-release `main` branch. Snapshot of what will become `0.1.0`.
+### Added
+
+- Rust+PyO3 kernel (`crates/recsys-kernels/`) for BPR's inner SGD loop.
+  `BPR.fit` now calls into the compiled extension and falls back to the
+  pure-Python loop only when the extension isn't importable.
+  See `docs/evolution/02-rust-kernel-bpr.md`.
+
+### Changed
+
+- Build backend moved from Hatchling to maturin so the same
+  `pip install -e .` flow compiles the Rust extension. Building from
+  source now requires a Rust toolchain; CONTRIBUTING.md has the setup.
+- `recommender_systems.__version__` is now sourced from installed
+  package metadata rather than hard-coded in `__init__.py`.
+
+## [0.1.0]
+
+Initial pre-release `main`. Snapshot of what will become `0.1.0`.
 
 ### Added
 

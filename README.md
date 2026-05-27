@@ -54,13 +54,19 @@ cd Recommender-Systems
 pip install -e .
 ```
 
+Building from source needs a Rust toolchain — the BPR inner SGD loop lives in
+a small Rust extension (`crates/recsys-kernels/`) for a ~30× speedup over the
+pure-Python loop. `brew install rust` or [rustup](https://rustup.rs/) covers
+it; `pip install` then invokes `maturin` to compile the extension. Pre-built
+wheels on PyPI (planned) skip this step for end users.
+
 Optional extras:
 
 - `[neural]` — PyTorch for the two-tower neural CF (`TwoTowerCF`)
 - `[embeddings]` — gensim for word-embedding features
 - `[benchmarks]` — matplotlib + tabulate for the benchmark scripts
 - `[docs]` — mkdocs-material for building the docs site
-- `[dev]` — ruff, mypy, pytest, pytest-cov
+- `[dev]` — ruff, mypy, pytest, pytest-cov, pre-commit
 
 ## Quickstart
 

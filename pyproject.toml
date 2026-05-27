@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "recommender-systems"
@@ -31,7 +31,7 @@ dependencies = [
     "scikit-learn>=1.2",
     "scipy>=1.9",
 ]
-dynamic = ["version"]
+version = "0.1.0"
 
 [project.optional-dependencies]
 benchmarks = [
@@ -60,11 +60,11 @@ Repository = "https://github.com/Burton-David/Recommender-Systems"
 [project.scripts]
 recsys = "recommender_systems.cli:main"
 
-[tool.hatch.version]
-path = "src/recommender_systems/__init__.py"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/recommender_systems"]
+[tool.maturin]
+module-name = "recommender_systems._kernels"
+python-source = "src"
+manifest-path = "crates/recsys-kernels/Cargo.toml"
+features = ["pyo3/extension-module"]
 
 [tool.ruff]
 line-length = 100

@@ -6,6 +6,8 @@ and versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.5.0]
+
 ### Documented
 
 - `docs/evolution/05-go-serving-postmortem.md` — postmortem of the Go

@@ -70,7 +70,7 @@ Performance numbers (release build on Apple-Silicon):
 | BPR fit, ML-100k, 5 epochs | 4,503 ms | ~88 ms | ~51× |
 
 Hardware-dependent; the speedup ratio is what carries. The committed
-`tests/test_fit_speed.py::test_bpr_fit` benchmark now exercises the kernel
+`tests/benchmarks/test_fit_speed.py::test_bpr_fit` benchmark now exercises the kernel
 path, so the suite records a fresh number every time it runs. Full table
 in `benchmarks/profile.md`.
 

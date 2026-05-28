@@ -64,7 +64,7 @@ pip install -e .
 ```
 
 Building from source needs a Rust toolchain — the BPR inner SGD loop lives in
-a small Rust extension (`crates/recsys-kernels/`) for a ~30× speedup over the
+a small Rust extension (`crates/recsys-kernels/`) for a ~51× speedup over the
 pure-Python loop. `brew install rust` or [rustup](https://rustup.rs/) covers
 it; `pip install` then invokes `maturin` to compile the extension. Pre-built
 wheels on PyPI (planned) skip this step for end users.
@@ -119,7 +119,7 @@ recsys evaluate  --algo svd
 | `recommender_systems.neighborhood`  | `UserKNN`, `ItemKNN` | Cosine-similarity neighborhood CF                    |
 | `recommender_systems.svd`           | `SVD`                | Truncated SVD on the user-item matrix                |
 | `recommender_systems.content`       | `ContentBased`       | Item-feature similarity (TF-IDF, tags, embeddings)   |
-| `recommender_systems.bpr`           | `BPR`                | Bayesian Personalized Ranking (numpy SGD)            |
+| `recommender_systems.bpr`           | `BPR`                | Bayesian Personalized Ranking (Rust+PyO3 kernel; Python fallback) |
 | `recommender_systems.als`           | `ALS`                | Alternating Least Squares (Hu/Koren/Volinsky 2008)   |
 | `recommender_systems.neural`        | `TwoTowerCF`         | Two-tower neural CF (PyTorch; requires `[neural]`)   |
 

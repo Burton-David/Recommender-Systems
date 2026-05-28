@@ -11,13 +11,13 @@ it shines and one where it falls over. Here's the short version.
 |-----------|---------------|--------------------------|---------------|
 | `MostPopular` | Just ratings | Cold-start baseline; a reasonable default for new users | Personalization (it gives everyone the same list) |
 | `MeanRating` | Ratings + an explicit-rating scale | When highly-rated long-tail items matter | Implicit feedback; low catalog coverage |
-| `ItemKNN` | Ratings; dense item-similarity matrix | Strong CF baseline; broad catalog coverage | Cold-start items (no item with no ratings is reachable) |
-| `UserKNN` | Ratings; dense user-similarity matrix | Communities and tight clusters | Very large user bases (`n_users x n_users` is `O(n^2)` memory) |
-| `SVD` | Ratings | Dense latent structure; smoothing | Implicit feedback where 0 is not negative |
-| `BPR` | Implicit interactions only | Implicit feedback; learning what *order* items rank in | Datasets so large the numpy SGD loop is the bottleneck |
+| `ItemKNN` | Ratings; sparse item-item cosine | Strong CF baseline; broad catalog coverage | Cold-start items (an item with no ratings is unreachable) |
+| `UserKNN` | Ratings; per-user top-k neighbors via `NearestNeighbors` | Communities and tight clusters | When you specifically want a fully precomputed user-user matrix for downstream analysis |
+| `SVD` | Ratings; `TruncatedSVD` over the sparse user-item matrix | Dense latent structure; smoothing | Implicit feedback where 0 is not negative |
+| `BPR` | Implicit interactions only | Implicit feedback; learning what *order* items rank in | When you need closed-form solves rather than SGD — reach for ALS |
 | `ALS` | Implicit interactions only | Same setting as BPR; converges in many fewer epochs | Very high `n_factors` where the per-side solves dominate |
 | `ContentBased` | Per-item features | Cold-start items, niche-content surfacing | A pure-CF win on accuracy is on the table |
-| `TwoTowerCF` | Implicit interactions; PyTorch | Showing modern deep CF works on this API | Most cases — BPR/ALS are simpler and often as strong |
+| `TwoTowerCF` | Implicit interactions; PyTorch | Embedding models with future side-information towers | Most cases — BPR/ALS are simpler and often as strong |
 | `HybridRecommender` | Two or more fitted recommenders | Blending CF with content (cold-start) or model classes | One signal is dramatically stronger — weights matter |
 
 ## When pure collaborative filtering wins

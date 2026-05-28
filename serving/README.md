@@ -6,7 +6,11 @@ either and benchmarked apples-to-apples. The point of the exercise is the
 [Phase 5 postmortem](../docs/evolution/05-go-serving-postmortem.md):
 *does a Go serving layer actually pay off for this library's workload?*
 
-The answer is: not really. The postmortem walks through why.
+Short answer for this workload: yes, by a wider margin than expected — Go
+beat FastAPI + numpy on throughput, latency, and memory because the
+per-request matmul is too small for BLAS to dominate the request envelope.
+The postmortem walks through the measurement and why the original
+"Python wins on BLAS" prediction was wrong.
 
 ## What's here
 

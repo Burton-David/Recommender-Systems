@@ -45,7 +45,7 @@ Reproduce with `python -m scripts.benchmark_goodbooks`.
 | HybridBook  |       0.3206 |    0.1472 |  0.2109 |  0.3507 |      0.3545 |
 
 `HybridBook` is `ItemKNN + tag-based ContentBased` fused via `HybridRecommender`
-(RRF) with default weights `(3.0, 1.0)` — collaborative-leaning, because the
+(RRF) with default weights `(3.0, 1.0)`. It leans collaborative because the
 tag-only content signal (capped at 200 TF-IDF features) is weaker than CF on
 this dataset and equal weighting dilutes accuracy. The hybrid lands in the top
 tier alongside `ItemKNN` (within ~5% on precision/coverage, ~10% on
@@ -63,7 +63,7 @@ cd Recommender-Systems
 pip install -e .
 ```
 
-Building from source needs a Rust toolchain — the BPR inner SGD loop lives in
+Building from source needs a Rust toolchain: the BPR inner SGD loop lives in
 a small Rust extension (`crates/recsys-kernels/`) for a ~51× speedup over the
 pure-Python loop. `brew install rust` or [rustup](https://rustup.rs/) covers
 it; `pip install` then invokes `maturin` to compile the extension. Pre-built
@@ -71,11 +71,11 @@ wheels on PyPI (planned) skip this step for end users.
 
 Optional extras:
 
-- `[neural]` — PyTorch for the two-tower neural CF (`TwoTowerCF`)
-- `[embeddings]` — gensim for word-embedding features
-- `[benchmarks]` — matplotlib + tabulate for the benchmark scripts
-- `[docs]` — mkdocs-material for building the docs site
-- `[dev]` — ruff, mypy, pytest, pytest-cov, pre-commit
+- `[neural]`: PyTorch for the two-tower neural CF (`TwoTowerCF`)
+- `[embeddings]`: gensim for word-embedding features
+- `[benchmarks]`: matplotlib + tabulate for the benchmark scripts
+- `[docs]`: mkdocs-material for building the docs site
+- `[dev]`: ruff, mypy, pytest, pytest-cov, pre-commit
 
 ## Quickstart
 
@@ -99,7 +99,7 @@ print(f"precision@10 = {precision_at_k(predicted, actual, k=10):.3f}")
 print(f"NDCG@10      = {ndcg_at_k(predicted, actual, k=10):.3f}")
 ```
 
-Swap `SVD` for `UserKNN`, `MostPopular`, etc. — the rest of the script is
+Swap `SVD` for `UserKNN`, `MostPopular`, etc.; the rest of the script is
 unchanged. Full quickstart at
 <https://burton-david.github.io/Recommender-Systems/quickstart/>.
 
@@ -126,9 +126,9 @@ recsys evaluate  --algo svd
 `recommender_systems.features.text_features` builds TF-IDF / count / binary
 item-by-term matrices from per-item text, ready to pass to `ContentBased`.
 
-Evaluation metrics — `precision@k`, `recall@k`, `MAP@k`, `NDCG@k`, plus the
-beyond-accuracy set (intra-list diversity, novelty, catalog coverage,
-serendipity) — live in `recommender_systems.metrics`.
+`recommender_systems.metrics` holds the evaluation metrics: `precision@k`,
+`recall@k`, `MAP@k`, `NDCG@k`, plus the beyond-accuracy set (intra-list
+diversity, novelty, catalog coverage, serendipity).
 
 ## Development
 
